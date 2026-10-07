@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Записи — админ-панель</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-header="admin">
+<div id="site-header"></div>
+
+<main class="booking-narrow" style="padding-top:var(--sp-5); padding-bottom:var(--sp-8)">
+  <nav class="tabs" data-admin-tabs="/admin" style="margin-bottom:var(--sp-6)"></nav>
+  <div class="page-head">
+    <div>
+      <h2 class="booking-title">Записи</h2>
+      <p class="booking-sub">Все записи всех клиентов. Администратор может переносить и отменять без ограничения 24 часов.</p>
+    </div>
+  </div>
+  <div class="filters">
+    <label class="field">
+      <span class="field__label">Дата</span>
+      <input class="field__input" type="date" id="af-date">
+    </label>
+    <label class="field">
+      <span class="field__label">Мастер</span>
+      <select class="field__input select" id="af-master">
+        <option value="">Все мастера</option>
+      </select>
+    </label>
+    <label class="field">
+      <span class="field__label">Статус</span>
+      <select class="field__input select" id="af-status">
+        <option value="">Все статусы</option>
+        <option value="active">Подтверждена</option>
+        <option value="cancelled">Отменена</option>
+      </select>
+    </label>
+  </div>
+  <div class="admin-list" id="aa-list"><div class="spinner"></div></div>
+  <div class="state-box" id="aa-empty" hidden style="margin-top:var(--sp-4); padding:var(--sp-6)">
+    <p class="state-box__title" style="font-size:1.15rem">Записей не найдено</p>
+    <p class="small muted">Попробуйте изменить фильтры</p>
+  </div>
+</main>
+
+<!-- Модальное окно: отмена записи администратором -->
+<div class="modal-overlay" id="modal-admin-cancel" role="dialog" aria-modal="true">
+  <div class="modal">
+    <p class="modal__title">Отменить запись?</p>
+    <p class="modal__text" id="aa-cancel-text">Запись будет отменена, место освободится для других гостей.</p>
+<div class="auth-error alert" id="aa-cancel-error" role="alert" style="margin-top:var(--sp-4); text-align:left">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span data-error-text></span>
+    </div>
+    <div class="modal__actions">
+      <button class="btn btn--secondary" type="button" data-close>Не отменять</button>
+      <button class="btn btn--primary" type="button" id="aa-cancel-yes">Да, отменить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно: перенос записи администратором -->
+<div class="modal-overlay" id="modal-admin-move" role="dialog" aria-modal="true">
+  <div class="modal modal--wide">
+    <p class="modal__title">Перенести запись</p>
+    <p class="modal__text" id="am-sub">Выберите новые дату и время — показаны только свободные слоты мастера.</p>
+    <div id="am-picker" style="text-align:left"></div>
+<div class="auth-error alert" id="am-error" role="alert" style="margin-top:var(--sp-4); text-align:left">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span data-error-text></span>
+    </div>
+    <div class="modal__actions">
+      <button class="btn btn--secondary" type="button" data-close>Отмена</button>
+      <button class="btn btn--primary btn--disabled" type="button" id="am-confirm">Перенести</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/mock-data.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/pages/admin-appointments.js"></script>
+</body>
+</html>

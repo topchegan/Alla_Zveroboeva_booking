@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Услуги — админ-панель</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-header="admin">
+<div id="site-header"></div>
+
+<main class="booking-narrow" style="padding-top:var(--sp-5); padding-bottom:var(--sp-8)">
+  <nav class="tabs" data-admin-tabs="/admin/services" style="margin-bottom:var(--sp-6)"></nav>
+  <div class="page-head">
+    <div>
+      <h2 class="booking-title">Услуги</h2>
+      <p class="booking-sub">Название, длительность, цена и доступность при записи.</p>
+    </div>
+    <button class="btn btn--primary" type="button" id="service-add">Добавить услугу</button>
+  </div>
+  <div class="admin-list" id="services-list"><div class="spinner"></div></div>
+  <p class="booking-card__note" style="margin-top:var(--sp-5)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    Отключённая услуга не показывается при новой записи, но сохраняется в старых записях
+  </p>
+</main>
+
+<!-- Модальное окно: форма услуги -->
+<div class="modal-overlay" id="modal-service" role="dialog" aria-modal="true">
+  <form class="modal" id="service-form" novalidate>
+    <p class="modal__title" id="ms-title">Добавить услугу</p>
+    <div class="modal__form" style="text-align:left">
+      <label class="field">
+        <span class="field__label">Название</span>
+        <input class="field__input" type="text" id="ms-name" placeholder="Например: Маникюр с покрытием гель-лаком">
+      </label>
+      <label class="field">
+        <span class="field__label">Длительность, минут</span>
+        <input class="field__input" type="number" min="5" step="5" inputmode="numeric" id="ms-min" placeholder="90">
+      </label>
+      <label class="field">
+        <span class="field__label">Цена, ₽</span>
+        <input class="field__input" type="number" min="0" step="50" inputmode="numeric" id="ms-price" placeholder="1800">
+      </label>
+      <label class="check">
+        <input type="checkbox" id="ms-nail"><span class="check__box"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span>
+        <span>Ногтевая услуга — к ней можно добавить «Дизайн ногтей»</span>
+      </label>
+    </div>
+<div class="auth-error alert" id="ms-error" role="alert" style="margin-top:var(--sp-4); text-align:left">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span data-error-text></span>
+    </div>
+    <div class="modal__actions">
+      <button class="btn btn--secondary" type="button" data-close>Отмена</button>
+      <button class="btn btn--primary" type="submit">Сохранить</button>
+    </div>
+  </form>
+</div>
+
+<script src="/js/mock-data.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/pages/admin-services.js"></script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Запись — Алла Зверобоева</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-header="client" class="booking-page">
+<div id="site-header"></div>
+
+<div class="booking-narrow booking-steps"><div class="steps" id="bk-steps"></div></div>
+
+<main>
+  <!-- Шаг 1: услуга -->
+  <section class="booking-narrow" data-step="1">
+    <h2 class="booking-title">Выберите услугу</h2>
+    <p class="booking-sub">Одна основная услуга. К ногтевым услугам можно добавить дизайн ногтей.</p>
+    <div class="booking-list" id="bk-services"></div>
+    <div class="option-card" id="bk-design" hidden style="margin-top:var(--sp-4)">
+      <div class="option-card__head">
+        <span class="option-card__name">Дизайн ногтей</span>
+        <span class="price"><small>от</small> <span id="bk-design-price">300 ₽</span></span>
+      </div>
+      <p class="small muted" style="margin-top:6px" id="bk-design-who"></p>
+      <div class="chip-row" id="bk-nails"></div>
+      <p class="small muted" style="margin-top:var(--sp-3)" id="bk-design-rules"></p>
+    </div>
+  </section>
+
+  <!-- Шаг 2: мастер -->
+  <section class="booking-narrow" data-step="2" hidden>
+    <h2 class="booking-title">Выберите мастера</h2>
+    <p class="booking-sub" id="bk-master-sub">Показаны только мастера, которые выполняют выбранную услугу.</p>
+    <div class="booking-list" id="bk-masters"></div>
+  </section>
+
+  <!-- Шаг 3: дата и время -->
+  <section class="booking-narrow" data-step="3" hidden>
+    <h2 class="booking-title">Выберите дату и время</h2>
+    <p class="booking-sub" id="bk-time-sub">Лента на 30 дней вперёд — активны только рабочие дни мастера.</p>
+    <div id="bk-time"></div>
+  </section>
+
+  <!-- Шаг 4: подтверждение -->
+  <section class="booking-narrow" data-step="4" hidden>
+    <h2 class="booking-title">Проверьте запись</h2>
+    <p class="booking-sub">Если всё верно — подтвердите. Вернуться и изменить можно на любом шаге.</p>
+    <div class="summary">
+      <div class="summary__row"><span class="summary__label">Услуга</span><span class="summary__value" id="cf-service">—</span></div>
+      <div class="summary__row" id="cf-option-row" hidden><span class="summary__label">Доп. опция</span><span class="summary__value" id="cf-option">—</span></div>
+      <div class="summary__row"><span class="summary__label">Мастер</span><span class="summary__value" id="cf-master">—</span></div>
+      <div class="summary__row"><span class="summary__label">Дата и время</span><span class="summary__value" id="cf-when">—</span></div>
+      <div class="summary__row"><span class="summary__label">Длительность</span><span class="summary__value" id="cf-duration">—</span></div>
+      <div class="summary__row summary__row--total"><span class="summary__label" style="color:var(--ink); font-weight:700">Итого</span><span class="summary__value" id="cf-total">—</span></div>
+    </div>
+    <p class="confirm-note">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      Оплата в салоне. Отменить или перенести запись можно не позже чем за 24 часа.
+    </p>
+    <div class="auth-error alert" id="confirm-error" role="alert" style="margin-top:var(--sp-4)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span data-error-text>Это время уже заняли, выберите другое.</span>
+      <a class="btn btn--secondary btn--sm" href="#time" style="margin-left:auto; flex:none">Выбрать другое время</a>
+    </div>
+    <div class="confirm-actions">
+      <a class="btn btn--secondary" href="#time">Изменить</a>
+      <button class="btn btn--primary" type="button" id="cf-submit">Подтвердить запись</button>
+    </div>
+  </section>
+</main>
+
+<!-- Нижняя панель с итогом (шаги 1–3) -->
+<div class="booking-bar" id="bk-bar">
+  <div class="booking-bar__in">
+    <div class="booking-bar__info">
+      <div class="booking-bar__name" id="bk-bar-name">Услуга не выбрана</div>
+      <div class="booking-bar__meta" id="bk-bar-meta">—</div>
+    </div>
+    <span class="booking-bar__price" id="bk-bar-price">—</span>
+    <button class="btn btn--primary btn--disabled" type="button" id="bk-next">Далее</button>
+  </div>
+</div>
+
+<script src="/js/mock-data.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/pages/booking.js"></script>
+</body>
+</html>

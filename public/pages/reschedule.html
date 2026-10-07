@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Перенос записи — Алла Зверобоева</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-header="client" class="booking-page">
+<div id="site-header"></div>
+
+<main class="booking-narrow">
+  <h2 class="booking-title">Перенести запись</h2>
+  <p class="booking-sub">Услуга и мастер не меняются — выберите новые дату и время.</p>
+  <div class="summary" style="margin-bottom:var(--sp-6)">
+    <div class="summary__row"><span class="summary__label">Услуга</span><span class="summary__value" id="rs-service">—</span></div>
+    <div class="summary__row"><span class="summary__label">Мастер</span><span class="summary__value" id="rs-master">—</span></div>
+    <div class="summary__row"><span class="summary__label">Текущее время</span><span class="summary__value" id="rs-current">—</span></div>
+    <div class="summary__row"><span class="summary__label">Длительность</span><span class="summary__value" id="rs-duration">—</span></div>
+  </div>
+  <div id="rs-picker"></div>
+  <div class="state-box" id="rs-blocked" hidden>
+    <p class="state-box__title" id="rs-blocked-title">Перенос недоступен</p>
+    <p class="small muted" id="rs-blocked-text"></p>
+  </div>
+  <div class="auth-error alert" id="rs-error" role="alert" style="margin-top:var(--sp-5)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    <span data-error-text></span>
+  </div>
+  <div class="confirm-actions" style="margin-top:var(--sp-6)">
+    <a class="btn btn--secondary" href="/cabinet">Назад</a>
+    <button class="btn btn--primary btn--disabled" type="button" id="rs-confirm">Перенести на выбранное время</button>
+  </div>
+</main>
+
+<script src="/js/mock-data.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/pages/reschedule.js"></script>
+</body>
+</html>

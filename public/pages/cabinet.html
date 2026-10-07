@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Мои записи — Алла Зверобоева</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-header="client">
+<div id="site-header"></div>
+
+<main class="booking-narrow" style="padding-top:var(--sp-6); padding-bottom:var(--sp-8)">
+  <div class="page-head">
+    <div>
+      <h2 class="booking-title">Мои записи</h2>
+      <p class="booking-sub" id="cab-sub">Здесь все ваши визиты — предстоящие и прошедшие.</p>
+    </div>
+    <a class="btn btn--primary" href="/booking">Записаться</a>
+  </div>
+  <div class="tabs" id="cab-tabs" style="margin-bottom:var(--sp-5)">
+    <button type="button" class="is-current" data-tab="upcoming">Предстоящие</button>
+    <button type="button" data-tab="past">Прошедшие</button>
+  </div>
+  <div class="admin-list" id="cab-list"><div class="spinner"></div></div>
+</main>
+
+<!-- Модальное окно: отмена записи клиентом -->
+<div class="modal-overlay" id="modal-cancel" role="dialog" aria-modal="true" aria-labelledby="modal-cancel-title">
+  <div class="modal">
+    <p class="modal__title" id="modal-cancel-title">Отменить запись?</p>
+    <p class="modal__text" id="modal-cancel-text">Место освободится для других гостей.</p>
+    <div class="auth-error alert" id="cancel-error" role="alert" style="margin-top:var(--sp-4); text-align:left">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span data-error-text></span>
+    </div>
+    <div class="modal__actions">
+      <button class="btn btn--secondary" type="button" data-close>Не отменять</button>
+      <button class="btn btn--primary" type="button" id="cab-cancel-yes">Да, отменить</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/mock-data.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/pages/cabinet.js"></script>
+</body>
+</html>
