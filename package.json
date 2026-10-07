@@ -5,10 +5,11 @@
   "description": "Сервис онлайн-записи «Маникюрный салон Алла Зверобоева»",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node --env-file-if-exists=.env server.js",
+    "db:check": "node scripts/check-db.js"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.9"
   },
   "dependencies": {
     "express": "^4.21.2"

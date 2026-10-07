@@ -1,8 +1,12 @@
 // Сервер онлайн-записи «Алла Зверобоева».
-// Этап 1: только статические файлы и страницы по адресам, данные — тестовые (public/js/mock-data.js).
+// Страницы и статика; база данных создаётся и наполняется при старте.
+// Данные на страницах пока тестовые (public/js/mock-data.js) — API появится на следующих шагах.
 
 const path = require('node:path');
 const express = require('express');
+const { openDatabase } = require('./server/db');
+const { runMigrations } = require('./server/migrate');
+const { runSeed } = require('./server/seed');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -36,6 +40,18 @@ for (const [route, file] of Object.entries(PAGES)) {
 app.use('/css', express.static(path.join(PUBLIC_DIR, 'css')));
 app.use('/js', express.static(path.join(PUBLIC_DIR, 'js')));
 
-app.listen(PORT, () => {
-  console.log(`Сервер запущен: http://localhost:${PORT}`);
+async function start() {
+  const db = openDatabase();
+  runMigrations(db);
+  await runSeed(db);
+  app.locals.db = db;
+
+  const server = app.listen(PORT, () => {
+    console.log(`Сервер запущен: http://localhost:${server.address().port}`);
+  });
+}
+
+start().catch((err) => {
+  console.error('Не удалось запустить сервер:', err);
+  process.exit(1);
 });
