@@ -70,38 +70,35 @@ window.UI = (function(){
       '<span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>' +
     '</a>';
 
+  /* Шапка по текущему пользователю (/api/me): гость, клиент или администратор */
   function renderHeader(){
     var host = document.getElementById('site-header');
     if (!host) return;
-    var kind = document.body.getAttribute('data-header');
-    if (kind === 'guest') {
+    API.getCurrentUser().then(function(user){ drawHeader(host, user); }, function(){ drawHeader(host, null); });
+  }
+  function drawHeader(host, user){
+    if (!user) {
       host.outerHTML =
         '<header class="home-header"><div class="home-header__in">' + LOGO +
           '<nav class="home-header__nav">' +
             '<a class="site-header__link site-header__link--hide-m" href="/#services">Услуги</a>' +
             '<a class="site-header__link site-header__link--hide-m" href="/#masters">Мастера</a>' +
             '<a class="site-header__link" href="/login">Войти</a>' +
-            '<a class="btn btn--primary btn--sm" href="/login">Записаться</a>' +
+            '<a class="btn btn--primary btn--sm" href="/booking">Записаться</a>' +
           '</nav>' +
         '</div></header>';
       return;
     }
-    var links = kind === 'admin'
+    var links = user.role === 'admin'
       ? '<a class="site-header__link site-header__link--admin site-header__link--hide-m" href="/admin">Админ-панель</a>'
       : '<a class="site-header__link site-header__link--hide-m" href="/cabinet">Мои записи</a>';
     host.outerHTML =
       '<header class="booking-head"><div class="booking-head__in">' + LOGO +
         '<div class="site-header__nav">' + links +
-          '<a class="site-header__link site-header__link--hide-m" href="/" data-logout>Выйти</a>' +
-          '<span class="user-chip" id="user-chip" hidden></span>' +
+          '<a class="site-header__link" href="/" data-logout>Выйти</a>' +
+          '<span class="user-chip"><span class="avatar">' + esc(initials(user.name)) + '</span>' + esc(firstName(user.name)) + '</span>' +
         '</div>' +
       '</div></header>';
-    API.getCurrentUser().then(function(user){
-      var chip = document.getElementById('user-chip');
-      if (!chip || !user) return;
-      chip.innerHTML = '<span class="avatar">' + esc(initials(user.name)) + '</span>' + esc(firstName(user.name));
-      chip.hidden = false;
-    });
   }
 
   /* Вкладки админ-панели */
@@ -164,6 +161,13 @@ window.UI = (function(){
     if (e.target.classList && e.target.classList.contains('modal-overlay')) closeModal(e.target.id);
   });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
+
+  /* Безопасный адрес возврата после входа: только локальный путь (не «//…» и не «/\\…») */
+  function safeNext(){
+    var next = query('next');
+    if (!next || next.charAt(0) !== '/' || next.charAt(1) === '/' || next.charAt(1) === '\\') return null;
+    return next;
+  }
 
   /* Ошибка формы в блоке .alert */
   function showError(el, text){
@@ -302,7 +306,11 @@ window.UI = (function(){
     renderAdminTabs();
     showFlash();
     document.addEventListener('click', function(e){
-      if (e.target.closest('[data-logout]')) { API.logout(); }
+      if (!e.target.closest('[data-logout]')) return;
+      e.preventDefault();
+      // Выход: удалить сессию на сервере и перейти на главную (даже если сервер не ответил)
+      API.logout().then(goHome, goHome);
+      function goHome(){ location.href = '/'; }
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
@@ -320,6 +328,7 @@ window.UI = (function(){
     firstName: firstName,
     initials: initials,
     query: query,
+    safeNext: safeNext,
     toast: toast,
     flash: flash,
     openModal: openModal,

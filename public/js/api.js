@@ -1,16 +1,22 @@
 /* ============================================================
    API — единственная точка доступа к данным для всех страниц.
 
-   Этап 1: функции возвращают Promise с тестовыми данными из mock-data.js,
-   состояние хранится в localStorage этого браузера.
-   Этап 2: тела функций заменятся на запросы к серверному API,
-   имена функций, параметры и формат ответов останутся прежними.
+   Этап 2 (переход по шагам): вход, регистрация, выход, текущий пользователь
+   и записи клиента — запросы к серверному API. Остальные функции пока
+   возвращают тестовые данные из mock-data.js (состояние — в localStorage),
+   их тела заменятся на запросы к API на следующих шагах; имена функций,
+   параметры и формат ответов останутся прежними.
 
    Ошибка — отклонённый Promise с объектом { code, message }:
-     VALIDATION  — неверные данные;
-     NOT_FOUND   — объект не найден (или чужая запись);
-     SLOT_TAKEN  — выбранное время уже занято;
-     TOO_LATE    — до визита меньше 24 часов (для клиента).
+     VALIDATION          — неверные данные;
+     NOT_FOUND           — объект не найден (или чужая запись);
+     SLOT_TAKEN          — выбранное время уже занято;
+     TOO_LATE            — до визита меньше 24 часов (для клиента);
+     UNAUTHORIZED        — нужно войти;
+     EMAIL_TAKEN         — email уже зарегистрирован;
+     INVALID_CREDENTIALS — неверный email или пароль;
+     TOO_MANY_ATTEMPTS   — слишком много неудачных попыток входа;
+     NETWORK, INTERNAL   — нет связи с сервером / ошибка сервера.
    ============================================================ */
 window.API = (function(){
   var SEED = window.MOCK_DATA;
@@ -133,7 +139,37 @@ window.API = (function(){
     return list.reduce(function(max, x){ return Math.max(max, x.id); }, 0) + 1;
   }
 
-  /* ---------- Ответы ---------- */
+  /* ---------- Запросы к серверу ---------- */
+  function request(method, url, body){
+    var opts = { method: method, credentials: 'same-origin', headers: { 'Accept': 'application/json' } };
+    if (body !== undefined) {
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(body);
+    }
+    return fetch(url, opts).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(data){
+        if (res.ok) return data;
+        throw (data && data.code) ? data : { code: 'INTERNAL', message: 'Ошибка сервера. Попробуйте ещё раз' };
+      });
+    }, function(){
+      throw { code: 'NETWORK', message: 'Нет связи с сервером. Проверьте подключение' };
+    });
+  }
+
+  /* Текущий пользователь: один запрос на загрузку страницы (шапка и страница используют общий ответ) */
+  var mePromise = null;
+  function fetchMe(){
+    if (!mePromise) {
+      mePromise = request('GET', '/api/me').catch(function(err){
+        if (err && err.code === 'UNAUTHORIZED') return null;
+        mePromise = null;
+        throw err;
+      });
+    }
+    return mePromise;
+  }
+
+  /* ---------- Ответы заглушки ---------- */
   function ok(data, ms){
     return new Promise(function(resolve){ setTimeout(function(){ resolve(clone(data)); }, ms || 120); });
   }
@@ -263,16 +299,8 @@ window.API = (function(){
   }
   function sortByTime(a, b){ return (a.date + a.time).localeCompare(b.date + b.time); }
 
-  /* ---------- Текущий пользователь (заглушка) ----------
-     Пока нет авторизации, пользователь определяется разделом сайта:
-     гостевые страницы — гость, /booking и /cabinet — тестовый клиент, /admin — администратор. */
-  var CLIENT_ID = 1, ADMIN_ID = 100;
-  function currentUser(){
-    var area = document.body && document.body.getAttribute('data-header');
-    if (area === 'admin') return byId(state.users, ADMIN_ID);
-    if (area === 'client') return byId(state.users, CLIENT_ID);
-    return null;
-  }
+  /* Тестовый клиент для функций, ещё не переведённых на API (создание, отмена, перенос записи) */
+  var CLIENT_ID = 1;
   function myAppointment(id){
     var a = byId(state.appointments, id);
     return a && a.clientId === CLIENT_ID ? a : null;
@@ -307,18 +335,28 @@ window.API = (function(){
   load();
 
   return {
-    /* ===== Пользователь (заглушки до этапа 2) ===== */
-    getCurrentUser: function(){ return ok(currentUser(), 0); },
+    /* ===== Пользователь (серверное API) ===== */
+    /* { id, name, email, role } или null для гостя */
+    getCurrentUser: fetchMe,
     login: function(email, password){
-      if (!email || !password) return fail('VALIDATION', 'Введите email и пароль');
-      return ok(byId(state.users, CLIENT_ID));
+      return request('POST', '/api/auth/login', { email: email, password: password }).then(function(r){
+        mePromise = Promise.resolve(r.user);
+        return r.user;
+      });
     },
+    /* data: { name, email, password, passwordConfirm } */
     register: function(data){
       data = data || {};
-      if (!data.name || !data.email || !data.password) return fail('VALIDATION', 'Заполните все поля');
-      return ok(byId(state.users, CLIENT_ID));
+      return request('POST', '/api/auth/register', {
+        name: data.name, email: data.email, password: data.password, passwordConfirm: data.passwordConfirm
+      }).then(function(r){
+        mePromise = Promise.resolve(r.user);
+        return r.user;
+      });
     },
-    logout: function(){ return ok(null); },
+    logout: function(){
+      return request('POST', '/api/auth/logout', {}).then(function(){ mePromise = Promise.resolve(null); return null; });
+    },
 
     /* ===== Каталог ===== */
     getSalonInfo: function(){ return ok(state.salon); },
@@ -385,11 +423,9 @@ window.API = (function(){
       save();
       return ok(appointmentView(a, true), 300);
     },
+    /* Записи текущего клиента — из базы (серверное API) */
     getMyAppointments: function(){
-      return ok(state.appointments
-        .filter(function(a){ return a.clientId === CLIENT_ID; })
-        .map(function(a){ return appointmentView(a, true); })
-        .sort(sortByTime));
+      return request('GET', '/api/me/appointments');
     },
     getAppointment: function(id){
       var a = myAppointment(id);
