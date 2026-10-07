@@ -7,7 +7,7 @@ SQLite через встроенный `node:sqlite` (Node.js 22). Файл ба
 в `schema_migrations`. Затем `server/seed.js` заполняет пустые таблицы начальными данными.
 Для каждого соединения включено `PRAGMA foreign_keys = ON`.
 
-Актуальная схема: миграция `001_init.sql`.
+Актуальная схема: миграции `001_init.sql` и `002_login_attempts.sql`.
 
 ## Соглашения
 
@@ -33,6 +33,7 @@ erDiagram
 ```
 
 `design_option` — одна строка с настройками опции «Дизайн ногтей», без связей.
+`login_attempts` — счётчик неудачных входов по email, без связей.
 
 ## Таблицы
 
@@ -53,6 +54,12 @@ erDiagram
 | created_at | TEXT | NOT NULL |
 
 ### sessions — сессии входа
+
+Токен — 32 случайных байта (base64url), выдаётся только в cookie `az_session`
+(HttpOnly, SameSite=Lax, Path=/, срок 30 дней, Secure при https). В БД — только SHA-256 токена.
+Срок фиксированный, не продлевается; выход удаляет строку; просроченные сессии
+удаляются при каждом входе и регистрации.
+
 | Поле | Тип | Ограничения |
 |---|---|---|
 | id | INTEGER | PK |
@@ -62,6 +69,17 @@ erDiagram
 | expires_at | TEXT | NOT NULL |
 
 Индексы: `ix_sessions_user (user_id)`, `ix_sessions_expires (expires_at)`.
+
+### login_attempts — неудачные попытки входа (002_login_attempts.sql)
+| Поле | Тип | Ограничения |
+|---|---|---|
+| id | INTEGER | PK |
+| email | TEXT | NOT NULL, COLLATE NOCASE; в нижнем регистре, в том числе несуществующий |
+| attempted_at | TEXT | NOT NULL, UTC |
+
+Индекс `ix_login_attempts_email_time (email, attempted_at)`. Не больше 10 неудачных попыток
+за 15 минут на email — дальше `429 TOO_MANY_ATTEMPTS`. Успешный вход очищает записи этого email,
+записи старше 15 минут удаляются при каждой новой неудаче. Связей с другими таблицами нет.
 
 ### services — услуги
 | Поле | Тип | Ограничения |

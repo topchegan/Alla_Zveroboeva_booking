@@ -9,10 +9,11 @@ const { spawn } = require('node:child_process');
 const { openDatabase } = require('../server/db');
 
 const ROOT = path.join(__dirname, '..');
-const TABLES = ['schema_migrations', 'users', 'sessions', 'services', 'design_option', 'masters',
+const TABLES = ['schema_migrations', 'users', 'sessions', 'login_attempts', 'services', 'design_option', 'masters',
   'master_services', 'master_schedule', 'blocks', 'appointments'];
+const MIGRATIONS = fs.readdirSync(path.join(__dirname, '..', 'migrations')).filter((f) => /^\d+_.+\.sql$/.test(f));
 const EXPECTED_AFTER_SEED = {
-  schema_migrations: 1, users: 4, sessions: 0, services: 5, design_option: 1, masters: 3,
+  schema_migrations: MIGRATIONS.length, users: 4, sessions: 0, login_attempts: 0, services: 5, design_option: 1, masters: 3,
   master_services: 9, master_schedule: 11, blocks: 3, appointments: 6,
 };
 
@@ -92,8 +93,8 @@ async function main() {
     console.log('Лог сервера, 1-й запуск:\n' + serverLog(out1) + '\n');
     const first = countRows(dbPath);
     const seedOk = TABLES.every((t) => first[t] === EXPECTED_AFTER_SEED[t]);
-    check('1. Первый запуск на пустой базе: миграция применена, seed создал справочники, админа и демо-данные',
-      out1.includes('применена 001_init.sql') && out1.includes('Сервер запущен') && seedOk,
+    check('1. Первый запуск на пустой базе: миграции применены, seed создал справочники, админа и демо-данные',
+      MIGRATIONS.every((f) => out1.includes(`применена ${f}`)) && out1.includes('Сервер запущен') && seedOk,
       seedOk ? 'количество строк совпадает с ожидаемым' : `ожидалось: ${JSON.stringify(EXPECTED_AFTER_SEED)}`);
 
     // 2. Повторный запуск

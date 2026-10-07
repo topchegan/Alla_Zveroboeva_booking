@@ -3,9 +3,8 @@
 
 const { transaction } = require('./db');
 const { hashPassword } = require('./password');
+const { toMin, fromMin, mskNow, addDays, weekdayOf } = require('./time');
 
-const MSK_OFFSET_MIN = 180; // Москва: UTC+3 без перехода на летнее время
-const DAY_MS = 24 * 60 * 60 * 1000;
 const SLOT_STEP = 30;
 const BOOKING_DAYS = 30;
 
@@ -63,24 +62,8 @@ const DEMO_APPOINTMENTS = [
   { n: 6, client: 3, serviceId: 3, masterId: 3, when: { type: 'next', weekday: 4, minDays: 1 }, time: '15:00', status: 'active' },
 ];
 
-/* ---------- Время по Москве ---------- */
+/* ---------- Даты ---------- */
 
-function pad(n) { return String(n).padStart(2, '0'); }
-function toMin(hhmm) { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; }
-function fromMin(m) { return `${pad(Math.floor(m / 60))}:${pad(m % 60)}`; }
-function mskNow() {
-  const d = new Date(Date.now() + MSK_OFFSET_MIN * 60000);
-  return {
-    date: `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`,
-    minutes: d.getUTCHours() * 60 + d.getUTCMinutes(),
-  };
-}
-function parseDate(date) { const [y, m, d] = date.split('-').map(Number); return Date.UTC(y, m - 1, d); }
-function addDays(date, n) {
-  const d = new Date(parseDate(date) + n * DAY_MS);
-  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
-}
-function weekdayOf(date) { return new Date(parseDate(date)).getUTCDay(); }
 function nextWeekday(today, weekday, minDays) {
   let d = addDays(today, minDays || 0);
   while (weekdayOf(d) !== weekday) d = addDays(d, 1);
