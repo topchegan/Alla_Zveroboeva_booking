@@ -1,0 +1,3721 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Алла Зверобоева — прототип онлайн-записи</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ДИЗАЙН-ТОКЕНЫ — все цвета, размеры и отступы в одном месте
+   ============================================================ */
+:root{
+  /* Цвета: основные */
+  --milk:        #FBF8F2;   /* молочный фон страницы */
+  --cream:       #F4EDE2;   /* кремовый фон секций */
+  --surface:     #FFFFFF;   /* карточки */
+  --ink:         #35312B;   /* графитовый текст */
+  --pink:        #E9C3CB;   /* пудрово-розовый */
+  --pink-tint:   #F7E9EC;   /* розовая заливка */
+  --pink-deep:   #B87C8A;   /* розовый акцент (кнопки, ссылки) */
+  --pink-deep-2: #A46677;   /* hover акцента */
+  /* Цвета: нейтральные */
+  --ink-2:       #6F665B;   /* вторичный текст */
+  --ink-3:       #A89D8F;   /* подписи, плейсхолдеры */
+  --line:        #EAE1D2;   /* hairline-разделители */
+  --line-soft:   #F2EBDF;   /* светлые разделители */
+  --cream-2:     #EFE6D8;   /* тёплая заливка */
+  /* Цвета: семантические */
+  --ok:          #7A9B7E;   --ok-tint:   #EBF1EB;
+  --warn:        #BE8F3C;   --warn-tint: #F8F0DD;
+  --err:         #BE6A5C;   --err-tint:  #F9EAE6;
+  --info:        #7E93A8;   --info-tint: #EDF1F5;
+  /* Типографика */
+  --font-display: 'Cormorant Garamond', 'Times New Roman', serif;
+  --font-ui:      'Manrope', -apple-system, 'Segoe UI', sans-serif;
+  --fs-h1: clamp(2.4rem, 7vw, 3.4rem);
+  --fs-h2: clamp(1.9rem, 5vw, 2.5rem);
+  --fs-h3: 1.45rem;
+  --fs-body: 1rem;
+  --fs-small: 0.875rem;
+  --fs-caption: 0.72rem;
+  --lh-body: 1.6;
+  /* Радиусы */
+  --r-s: 10px;
+  --r-m: 16px;
+  --r-l: 26px;
+  --r-pill: 999px;
+  /* Отступы */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+  --sp-9: 96px;
+  /* Тени (тёплые) */
+  --sh-s: 0 2px 8px rgba(53,49,43,.05);
+  --sh-m: 0 8px 24px rgba(53,49,43,.07);
+  --sh-l: 0 20px 48px rgba(53,49,43,.10);
+  /* Служебное */
+  --proto-nav-h: 52px;
+  --wrap: 1120px;
+}
+
+/* ============================================================
+   БАЗА
+   ============================================================ */
+*,*::before,*::after{ box-sizing:border-box; }
+[hidden]{ display:none !important; }
+html{ scroll-behavior:smooth; }
+body{
+  margin:0;
+  background:var(--milk);
+  color:var(--ink);
+  font-family:var(--font-ui);
+  font-size:var(--fs-body);
+  line-height:var(--lh-body);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{
+  font-family:var(--font-display);
+  font-weight:600;
+  line-height:1.08;
+  letter-spacing:-0.01em;
+  margin:0;
+}
+h1{ font-size:var(--fs-h1); }
+h2{ font-size:var(--fs-h2); }
+h3{ font-size:var(--fs-h3); }
+h1 em,h2 em{ font-style:italic; color:var(--pink-deep); font-weight:500; }
+p{ margin:0; }
+a{ color:var(--pink-deep); text-decoration:none; }
+img{ max-width:100%; display:block; }
+button{ font-family:inherit; cursor:pointer; }
+::selection{ background:var(--pink); color:var(--ink); }
+
+.wrap{ max-width:var(--wrap); margin:0 auto; padding:0 var(--sp-5); }
+
+/* Экраны прототипа */
+.screen{ display:none; }
+.screen.is-active{ display:block; }
+
+/* ============================================================
+   СЛУЖЕБНОЕ МЕНЮ ПРОТОТИПА
+   ============================================================ */
+.proto-nav{
+  position:sticky; top:0; z-index:200;
+  height:var(--proto-nav-h);
+  display:flex; align-items:center; gap:var(--sp-4);
+  padding:0 var(--sp-4);
+  background:#2E2A25;
+  color:#F4EDE2;
+  font-size:var(--fs-small);
+}
+.proto-nav__tag{
+  font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;
+  background:var(--pink); color:var(--ink);
+  padding:3px 8px; border-radius:var(--r-pill);
+  flex:none;
+}
+.proto-nav__title{ font-weight:600; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.proto-nav__links{ display:flex; gap:var(--sp-2); margin-left:auto; flex:none; overflow-x:auto; max-width:70vw; scrollbar-width:none; }
+.proto-nav__links::-webkit-scrollbar{ display:none; }
+.proto-nav__links a{
+  color:#F4EDE2; opacity:.75;
+  padding:6px 12px; border-radius:var(--r-pill);
+  border:1px solid rgba(244,237,226,.25);
+  transition:opacity .15s ease, background .15s ease;
+  white-space:nowrap;
+}
+.proto-nav__links a:hover{ opacity:1; }
+.proto-nav__links a.is-current{ background:var(--pink); color:var(--ink); border-color:var(--pink); opacity:1; font-weight:700; }
+
+/* ============================================================
+   ТИПОГРАФИЧЕСКИЕ ЭЛЕМЕНТЫ
+   ============================================================ */
+.eyebrow{
+  display:inline-flex; align-items:center; gap:var(--sp-3);
+  font-size:var(--fs-caption); font-weight:800;
+  letter-spacing:.16em; text-transform:uppercase;
+  color:var(--pink-deep);
+}
+.eyebrow::before{
+  content:""; width:28px; height:1px; background:var(--pink-deep); flex:none;
+}
+.lead{ font-size:1.1rem; color:var(--ink-2); }
+.small{ font-size:var(--fs-small); }
+.muted{ color:var(--ink-2); }
+.caption{
+  font-size:var(--fs-caption); font-weight:700;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3);
+}
+.price{
+  font-family:var(--font-display); font-weight:600;
+  font-size:1.35rem; letter-spacing:.01em; white-space:nowrap;
+}
+.price small{ font-family:var(--font-ui); font-size:.72rem; font-weight:600; color:var(--ink-3); letter-spacing:.02em; }
+
+/* ============================================================
+   КНОПКИ
+   ============================================================ */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:var(--sp-2);
+  min-height:48px; padding:0 var(--sp-5);
+  border-radius:var(--r-pill);
+  border:1px solid transparent;
+  font-size:var(--fs-small); font-weight:700; letter-spacing:.02em;
+  text-decoration:none;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease, color .15s ease;
+  user-select:none;
+}
+.btn--primary{ background:var(--pink-deep); color:#fff; box-shadow:var(--sh-s); }
+.btn--primary:hover{ background:var(--pink-deep-2); transform:translateY(-2px); box-shadow:var(--sh-m); }
+.btn--secondary{ background:transparent; color:var(--ink); border-color:var(--ink); }
+.btn--secondary:hover{ background:var(--ink); color:var(--milk); transform:translateY(-2px); }
+.btn--text{
+  min-height:auto; padding:var(--sp-1) var(--sp-2);
+  background:none; color:var(--pink-deep); border-radius:var(--r-s);
+}
+.btn--text:hover{ background:var(--pink-tint, #F7E9EC); }
+.btn:disabled,.btn--disabled{
+  background:var(--cream-2); color:var(--ink-3);
+  box-shadow:none; cursor:not-allowed; transform:none;
+}
+.btn--sm{ min-height:40px; padding:0 var(--sp-4); }
+.btn--block{ width:100%; }
+
+/* ============================================================
+   ФОРМЫ
+   ============================================================ */
+.field{ display:flex; flex-direction:column; gap:6px; }
+.field__label{ font-size:var(--fs-small); font-weight:600; }
+.field__input{
+  height:52px; padding:0 var(--sp-4);
+  border:1px solid var(--line); border-radius:var(--r-m);
+  background:var(--surface);
+  font-family:inherit; font-size:var(--fs-body); color:var(--ink);
+  transition:border-color .15s ease, box-shadow .15s ease;
+  width:100%;
+}
+.field__input::placeholder{ color:var(--ink-3); }
+.field__input:focus{ outline:none; border-color:var(--pink-deep); box-shadow:0 0 0 3px var(--pink-tint, #F7E9EC); }
+.field--error .field__input{ border-color:var(--err); }
+.field--error .field__input:focus{ box-shadow:0 0 0 3px var(--err-tint); }
+.field__error{ font-size:var(--fs-small); color:var(--err); font-weight:600; display:flex; align-items:center; gap:6px; }
+
+/* Чекбокс */
+.check{ display:inline-flex; align-items:flex-start; gap:var(--sp-3); cursor:pointer; font-size:var(--fs-small); line-height:1.5; }
+.check input{ position:absolute; opacity:0; width:0; height:0; }
+.check__box{
+  flex:none; width:22px; height:22px; margin-top:1px;
+  border:1.5px solid var(--ink-3); border-radius:7px;
+  background:var(--surface);
+  display:grid; place-items:center;
+  transition:background .15s ease, border-color .15s ease;
+}
+.check__box svg{ width:12px; height:12px; stroke:#fff; stroke-width:3; fill:none; opacity:0; transform:scale(.5); transition:opacity .15s ease, transform .15s ease; }
+.check input:checked + .check__box{ background:var(--pink-deep); border-color:var(--pink-deep); }
+.check input:checked + .check__box svg{ opacity:1; transform:scale(1); }
+.check input:focus-visible + .check__box{ box-shadow:0 0 0 3px var(--pink-tint, #F7E9EC); }
+
+/* ============================================================
+   КАРТОЧКИ УСЛУГ / МАСТЕРОВ
+   ============================================================ */
+.service-card{
+  display:flex; align-items:center; gap:var(--sp-4);
+  width:100%; padding:var(--sp-4);
+  background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--r-l);
+  text-align:left;
+  transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.service-card:hover{ transform:translateY(-2px); box-shadow:var(--sh-m); }
+.service-card__body{ flex:1; min-width:0; }
+.service-card__name{ font-family:var(--font-display); font-size:1.25rem; font-weight:600; line-height:1.2; }
+.service-card__meta{ font-size:var(--fs-small); color:var(--ink-2); margin-top:2px; }
+.service-card__side{ text-align:right; flex:none; display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+.service-card.is-selected{ border-color:var(--pink-deep); box-shadow:0 0 0 3px var(--pink-tint, #F7E9EC), var(--sh-s); }
+.radio-dot{
+  width:22px; height:22px; border-radius:50%;
+  border:1.5px solid var(--ink-3);
+  display:grid; place-items:center; transition:border-color .15s ease;
+}
+.radio-dot::after{ content:""; width:10px; height:10px; border-radius:50%; background:var(--pink-deep); transform:scale(0); transition:transform .18s ease; }
+.is-selected .radio-dot{ border-color:var(--pink-deep); }
+.is-selected .radio-dot::after{ transform:scale(1); }
+
+/* Доп. опция: выбор количества ногтей */
+.option-card{
+  padding:var(--sp-5);
+  background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--r-l);
+}
+.option-card.is-selected{ border-color:var(--pink-deep); box-shadow:0 0 0 3px var(--pink-tint, #F7E9EC); }
+.option-card__head{ display:flex; align-items:baseline; justify-content:space-between; gap:var(--sp-3); }
+.option-card__name{ font-family:var(--font-display); font-size:1.25rem; font-weight:600; }
+.chip-row{ display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-top:var(--sp-4); }
+.chip{
+  min-width:46px; height:40px; padding:0 var(--sp-3);
+  border-radius:var(--r-pill);
+  border:1px solid var(--line); background:var(--surface);
+  font-size:var(--fs-small); font-weight:700; color:var(--ink-2);
+  transition:all .15s ease;
+}
+.chip:hover{ border-color:var(--pink-deep); color:var(--pink-deep); }
+.chip.is-selected{ background:var(--pink-deep); border-color:var(--pink-deep); color:#fff; }
+.option-card__total{ margin-top:var(--sp-4); padding-top:var(--sp-4); border-top:1px dashed var(--line); font-size:var(--fs-small); color:var(--ink-2); display:flex; justify-content:space-between; align-items:baseline; }
+
+/* Мастер */
+.master-card{
+  display:flex; align-items:center; gap:var(--sp-4);
+  width:100%; padding:var(--sp-4);
+  background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--r-l);
+  text-align:left;
+  transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.master-card:hover{ transform:translateY(-2px); box-shadow:var(--sh-m); }
+.master-card.is-selected{ border-color:var(--pink-deep); box-shadow:0 0 0 3px var(--pink-tint, #F7E9EC), var(--sh-s); }
+.avatar{
+  flex:none; width:64px; height:64px; border-radius:50%;
+  display:grid; place-items:center;
+  font-family:var(--font-display); font-size:1.4rem; font-weight:600; color:var(--pink-deep);
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,.9), rgba(255,255,255,0) 55%),
+    linear-gradient(140deg, var(--pink) 0%, var(--cream-2) 100%);
+  border:1px solid var(--line);
+}
+.avatar--lg{ width:88px; height:88px; font-size:1.9rem; }
+.master-card__name{ font-family:var(--font-display); font-size:1.25rem; font-weight:600; line-height:1.2; }
+.master-card__role{ font-size:var(--fs-small); color:var(--pink-deep); font-weight:600; margin-top:2px; }
+.master-card__sched{ font-size:var(--fs-small); color:var(--ink-2); margin-top:4px; }
+
+/* ============================================================
+   ЛЕНТА ДАТ И СЛОТЫ ВРЕМЕНИ
+   ============================================================ */
+.date-strip{
+  display:flex; gap:var(--sp-2);
+  overflow-x:auto; padding:var(--sp-2) var(--sp-1) var(--sp-3);
+  scrollbar-width:thin; scrollbar-color:var(--pink) transparent;
+}
+.date-cell{
+  flex:none; width:58px; padding:10px 0 12px;
+  border-radius:var(--r-m);
+  border:1px solid var(--line); background:var(--surface);
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  transition:all .15s ease;
+}
+.date-cell__wd{ font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); }
+.date-cell__d{ font-family:var(--font-display); font-size:1.35rem; font-weight:600; line-height:1; }
+.date-cell__m{ font-size:10px; color:var(--ink-3); }
+.date-cell:not(:disabled):hover{ border-color:var(--pink-deep); transform:translateY(-2px); }
+.date-cell.is-selected{ background:var(--pink-deep); border-color:var(--pink-deep); color:#fff; box-shadow:var(--sh-s); }
+.date-cell.is-selected .date-cell__wd,.date-cell.is-selected .date-cell__m{ color:rgba(255,255,255,.8); }
+.date-cell:disabled{ background:var(--cream); border-color:var(--line-soft); color:var(--ink-3); cursor:not-allowed; opacity:.65; }
+.date-cell:disabled .date-cell__d{ color:var(--ink-3); }
+
+.slots{ display:flex; flex-wrap:wrap; gap:var(--sp-2); }
+.slot{
+  min-width:76px; height:44px; padding:0 var(--sp-3);
+  border-radius:var(--r-s);
+  border:1px solid var(--line); background:var(--surface);
+  font-size:var(--fs-small); font-weight:700;
+  transition:all .15s ease;
+}
+.slot:hover{ border-color:var(--pink-deep); color:var(--pink-deep); }
+.slot.is-selected{ background:var(--pink-deep); border-color:var(--pink-deep); color:#fff; box-shadow:var(--sh-s); }
+
+/* Скелетон загрузки слотов */
+.slot--skeleton{
+  border:none; background:linear-gradient(100deg, var(--cream) 40%, var(--line-soft) 50%, var(--cream) 60%);
+  background-size:200% 100%;
+  animation:shimmer 1.4s infinite linear;
+  cursor:default;
+}
+@keyframes shimmer{ 0%{ background-position:180% 0; } 100%{ background-position:-20% 0; } }
+
+/* ============================================================
+   ИНДИКАТОР ШАГОВ
+   ============================================================ */
+.steps{ display:flex; align-items:flex-start; }
+.step{ flex:1; display:flex; flex-direction:column; align-items:center; gap:var(--sp-2); position:relative; text-align:center; }
+.step__dot{
+  width:34px; height:34px; border-radius:50%;
+  border:1.5px solid var(--line); background:var(--surface);
+  display:grid; place-items:center;
+  font-size:var(--fs-small); font-weight:800; color:var(--ink-3);
+  position:relative; z-index:1;
+  transition:all .2s ease;
+}
+.step__label{ font-size:11px; font-weight:700; color:var(--ink-3); letter-spacing:.02em; }
+.step::before{
+  content:""; position:absolute; top:17px; left:-50%; width:100%; height:1.5px;
+  background:var(--line);
+}
+.step:first-child::before{ display:none; }
+.step.is-done .step__dot{ background:var(--pink); border-color:var(--pink); color:var(--ink); }
+.step.is-done::before{ background:var(--pink); }
+.step.is-current .step__dot{ background:var(--pink-deep); border-color:var(--pink-deep); color:#fff; box-shadow:0 0 0 4px var(--pink-tint, #F7E9EC); }
+.step.is-current .step__label{ color:var(--ink); }
+
+/* ============================================================
+   БЕЙДЖИ
+   ============================================================ */
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 12px; border-radius:var(--r-pill);
+  font-size:var(--fs-caption); font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+}
+.badge::before{ content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.badge--ok{ background:var(--ok-tint); color:#4F7355; }
+.badge--cancelled{ background:var(--cream-2); color:var(--ink-2); }
+.badge--warn{ background:var(--warn-tint); color:#8F6A24; }
+.badge--err{ background:var(--err-tint); color:#96493D; }
+.badge--info{ background:var(--info-tint); color:#54687C; }
+
+/* ============================================================
+   КАРТОЧКА ЗАПИСИ (личный кабинет)
+   ============================================================ */
+.booking-card{
+  background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--r-l);
+  padding:var(--sp-5);
+}
+.booking-card__top{ display:flex; justify-content:space-between; align-items:flex-start; gap:var(--sp-3); }
+.booking-card__service{ font-family:var(--font-display); font-size:1.3rem; font-weight:600; line-height:1.2; }
+.booking-card__meta{ font-size:var(--fs-small); color:var(--ink-2); margin-top:6px; display:flex; flex-direction:column; gap:2px; }
+.booking-card__row{ display:flex; align-items:center; gap:8px; }
+.booking-card__row svg{ width:14px; height:14px; stroke:var(--ink-3); fill:none; stroke-width:1.8; flex:none; }
+.booking-card__foot{ margin-top:var(--sp-4); padding-top:var(--sp-4); border-top:1px solid var(--line-soft); display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3); flex-wrap:wrap; }
+.booking-card__actions{ display:flex; gap:var(--sp-2); flex-wrap:wrap; }
+.booking-card__note{ margin-top:var(--sp-3); font-size:12px; color:var(--ink-3); display:flex; gap:6px; align-items:flex-start; line-height:1.45; }
+.booking-card__note svg{ width:13px; height:13px; flex:none; margin-top:2px; stroke:var(--ink-3); fill:none; stroke-width:1.8; }
+
+/* ============================================================
+   ШАПКА САЙТА (3 роли)
+   ============================================================ */
+.site-header{
+  display:flex; align-items:center; gap:var(--sp-4);
+  padding:var(--sp-3) var(--sp-5);
+  background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--r-l);
+}
+.logo{ display:flex; align-items:center; gap:10px; color:var(--ink); }
+.logo__mark{
+  width:38px; height:38px; border-radius:50%; flex:none;
+  display:grid; place-items:center;
+  background:linear-gradient(140deg, var(--pink) 0%, var(--pink-deep) 100%);
+  color:#fff; font-family:var(--font-display); font-weight:600; font-size:1.1rem;
+  box-shadow:var(--sh-s);
+}
+.logo__text{ font-family:var(--font-display); font-size:1.15rem; font-weight:600; line-height:1.05; }
+.logo__text small{ display:block; font-family:var(--font-ui); font-size:9px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-3); margin-top:2px; }
+.site-header__nav{ display:flex; align-items:center; gap:var(--sp-2); margin-left:auto; }
+.site-header__link{
+  font-size:var(--fs-small); font-weight:600; color:var(--ink);
+  padding:8px 10px; border-radius:var(--r-s);
+  transition:background .15s ease, color .15s ease;
+  white-space:nowrap;
+}
+.site-header__link:hover{ background:var(--pink-tint, #F7E9EC); color:var(--pink-deep); }
+.site-header__link--admin{ color:var(--pink-deep); font-weight:800; }
+.user-chip{
+  display:flex; align-items:center; gap:8px;
+  padding:5px 12px 5px 5px; border-radius:var(--r-pill);
+  background:var(--cream); border:1px solid var(--line);
+  font-size:var(--fs-small); font-weight:700;
+}
+.user-chip .avatar{ width:28px; height:28px; font-size:.8rem; border:none; }
+.role-tag{
+  font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-3); margin-bottom:var(--sp-2); display:block;
+}
+
+/* ============================================================
+   СОСТОЯНИЯ
+   ============================================================ */
+.state-box{
+  border:1px dashed var(--line); border-radius:var(--r-l);
+  background:var(--surface);
+  padding:var(--sp-7) var(--sp-5);
+  display:flex; flex-direction:column; align-items:center; text-align:center; gap:var(--sp-3);
+}
+.state-box__icon{
+  width:56px; height:56px; border-radius:50%;
+  background:var(--pink-tint, #F7E9EC);
+  display:grid; place-items:center;
+}
+.state-box__icon svg{ width:24px; height:24px; stroke:var(--pink-deep); fill:none; stroke-width:1.6; }
+.state-box__title{ font-family:var(--font-display); font-size:1.4rem; font-weight:600; }
+.spinner{
+  width:26px; height:26px; border-radius:50%;
+  border:3px solid var(--pink); border-top-color:var(--pink-deep);
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.alert{
+  display:flex; gap:var(--sp-3); align-items:flex-start;
+  padding:var(--sp-4);
+  border-radius:var(--r-m);
+  background:var(--err-tint);
+  border:1px solid #EFD3CC;
+  color:#8C463A;
+  font-size:var(--fs-small); font-weight:600; line-height:1.5;
+}
+.alert svg{ width:18px; height:18px; flex:none; stroke:currentColor; fill:none; stroke-width:1.8; margin-top:1px; }
+
+/* ============================================================
+   МОДАЛЬНОЕ ОКНО И ТОСТ
+   ============================================================ */
+.modal-overlay{
+  position:fixed; inset:0; z-index:300;
+  background:rgba(53,49,43,.45);
+  backdrop-filter:blur(3px);
+  display:none; align-items:center; justify-content:center;
+  padding:var(--sp-5);
+}
+.modal-overlay.is-open{ display:flex; }
+.modal{
+  width:100%; max-width:380px;
+  background:var(--surface); border-radius:var(--r-l);
+  padding:var(--sp-6);
+  box-shadow:var(--sh-l);
+  text-align:center;
+  animation:modalIn .22s ease;
+}
+@keyframes modalIn{ from{ opacity:0; transform:translateY(12px) scale(.97); } to{ opacity:1; transform:none; } }
+.modal__title{ font-family:var(--font-display); font-size:1.5rem; font-weight:600; }
+.modal__text{ font-size:var(--fs-small); color:var(--ink-2); margin-top:var(--sp-2); }
+.modal__actions{ display:flex; gap:var(--sp-2); margin-top:var(--sp-5); }
+.modal__actions .btn{ flex:1; }
+.toast{
+  position:fixed; left:50%; bottom:var(--sp-5); z-index:400;
+  transform:translate(-50%, 20px);
+  display:flex; align-items:center; gap:var(--sp-3);
+  padding:12px 18px;
+  background:var(--ink); color:var(--milk);
+  border-radius:var(--r-pill);
+  font-size:var(--fs-small); font-weight:600;
+  box-shadow:var(--sh-l);
+  opacity:0; pointer-events:none;
+  transition:opacity .25s ease, transform .25s ease;
+  max-width:calc(100vw - 32px);
+}
+.toast.is-visible{ opacity:1; transform:translate(-50%, 0); }
+.toast__dot{ width:8px; height:8px; border-radius:50%; background:var(--pink); flex:none; }
+
+/* ============================================================
+   ДИЗАЙН-СИСТЕМА: каркас страницы
+   ============================================================ */
+.ds-section{ padding:var(--sp-7) 0; border-bottom:1px solid var(--line); }
+.ds-section:last-child{ border-bottom:none; }
+.ds-section__head{ display:flex; align-items:baseline; gap:var(--sp-4); margin-bottom:var(--sp-6); }
+.ds-section__num{
+  font-family:var(--font-display); font-style:italic; font-size:1.1rem;
+  color:var(--pink-deep); flex:none;
+}
+.ds-section__title{ font-family:var(--font-display); font-size:1.8rem; font-weight:600; }
+.spec-grid{ display:grid; gap:var(--sp-4); grid-template-columns:1fr; }
+@media (min-width:760px){ .spec-grid--2{ grid-template-columns:1fr 1fr; } .spec-grid--3{ grid-template-columns:1fr 1fr 1fr; } }
+.spec{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--r-l);
+  padding:var(--sp-5);
+  display:flex; flex-direction:column; gap:var(--sp-4);
+}
+.spec--flat{ background:transparent; border-style:dashed; }
+.spec__label{ font-size:var(--fs-caption); font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3); }
+.spec__row{ display:flex; flex-wrap:wrap; gap:var(--sp-3); align-items:center; }
+
+/* Палитра */
+.swatch{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+.swatch__color{
+  height:64px; border-radius:var(--r-m);
+  border:1px solid rgba(53,49,43,.08);
+}
+.swatch__name{ font-size:12px; font-weight:700; }
+.swatch__hex{ font-size:11px; color:var(--ink-3); font-variant-numeric:tabular-nums; }
+.palette-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:var(--sp-4); }
+@media (min-width:760px){ .palette-grid{ grid-template-columns:repeat(4,1fr); } }
+
+/* ============================================================
+   ГЛАВНАЯ СТРАНИЦА
+   ============================================================ */
+.home-header{
+  position:sticky; top:var(--proto-nav-h); z-index:100;
+  background:rgba(251,248,242,.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.home-header__in{ display:flex; align-items:center; gap:var(--sp-3); padding:var(--sp-3) var(--sp-5); max-width:var(--wrap); margin:0 auto; }
+.home-header__nav{ margin-left:auto; display:flex; align-items:center; gap:var(--sp-2); }
+
+.hero{ padding:var(--sp-8) 0 var(--sp-7); }
+.hero__grid{ display:grid; gap:var(--sp-6); align-items:center; }
+@media (min-width:900px){ .hero__grid{ grid-template-columns:1.1fr .9fr; } .hero{ padding:var(--sp-9) 0 var(--sp-8); } }
+.hero__title{ margin:var(--sp-4) 0 var(--sp-4); }
+.hero__text{ color:var(--ink-2); font-size:1.08rem; max-width:44ch; }
+.hero__cta{ display:flex; gap:var(--sp-3); margin-top:var(--sp-6); flex-wrap:wrap; }
+.hero__note{ margin-top:var(--sp-4); font-size:var(--fs-small); color:var(--ink-2); display:flex; align-items:center; gap:8px; }
+.hero__note svg{ width:15px; height:15px; stroke:var(--pink-deep); fill:none; stroke-width:1.8; flex:none; }
+.hero__visual{
+  border-radius:var(--r-l);
+  aspect-ratio:4/4.6;
+  border:1px solid var(--line);
+  background:
+    radial-gradient(circle at 78% 18%, rgba(233,195,203,.55) 0 90px, transparent 92px),
+    radial-gradient(circle at 18% 82%, rgba(233,195,203,.35) 0 70px, transparent 72px),
+    linear-gradient(150deg, #F9F1E7 0%, #F4E7E4 55%, #EFDAD9 100%);
+  position:relative; overflow:hidden;
+  display:grid; place-items:center;
+}
+@media (max-width:899px){ .hero__visual{ aspect-ratio:16/10; } }
+.hero__visual::after{
+  content:""; position:absolute; inset:14px;
+  border:1px solid rgba(184,124,138,.35); border-radius:calc(var(--r-l) - 8px);
+  pointer-events:none;
+}
+.hero__monogram{ text-align:center; position:relative; z-index:1; }
+.hero__monogram b{
+  display:block; font-family:var(--font-display); font-weight:500;
+  font-size:clamp(3.4rem, 12vw, 5.4rem); line-height:.95; color:var(--pink-deep);
+}
+.hero__monogram span{
+  font-size:10px; font-weight:800; letter-spacing:.34em; text-transform:uppercase; color:var(--ink-2);
+}
+
+.home-section{ padding:var(--sp-8) 0; }
+.home-section--cream{ background:var(--cream); }
+.home-section__head{ margin-bottom:var(--sp-6); max-width:560px; }
+.home-section__head h2{ margin-top:var(--sp-3); }
+.home-section__head .lead{ margin-top:var(--sp-3); }
+
+.svc-list{ display:grid; gap:var(--sp-3); }
+@media (min-width:900px){ .svc-list{ grid-template-columns:1fr 1fr; gap:var(--sp-4); } }
+.svc-row{
+  display:flex; align-items:baseline; gap:var(--sp-4);
+  padding:var(--sp-4) 0; border-bottom:1px solid var(--line);
+}
+.svc-row__name{ font-family:var(--font-display); font-size:1.3rem; font-weight:600; }
+.svc-row__meta{ font-size:var(--fs-small); color:var(--ink-2); margin-top:2px; }
+.svc-row__leader{ flex:1; border-bottom:1px dotted var(--ink-3); transform:translateY(-4px); min-width:24px; opacity:.5; }
+.svc-row__tag{ font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--pink-deep); background:var(--pink-tint, #F7E9EC); padding:3px 9px; border-radius:var(--r-pill); }
+
+.masters-grid{ display:grid; gap:var(--sp-4); }
+@media (min-width:900px){ .masters-grid{ grid-template-columns:repeat(3,1fr); } }
+.master-tile{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--r-l);
+  padding:var(--sp-5);
+  display:flex; flex-direction:column; align-items:flex-start; gap:var(--sp-3);
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.master-tile:hover{ transform:translateY(-2px); box-shadow:var(--sh-m); }
+.master-tile__name{ font-family:var(--font-display); font-size:1.4rem; font-weight:600; }
+.master-tile__role{ font-size:var(--fs-small); font-weight:700; color:var(--pink-deep); }
+.master-tile__sched{ font-size:var(--fs-small); color:var(--ink-2); display:flex; gap:8px; align-items:center; }
+.master-tile__sched svg{ width:14px; height:14px; stroke:var(--ink-3); fill:none; stroke-width:1.8; flex:none; }
+
+.how-grid{ display:grid; gap:var(--sp-5); counter-reset:how; }
+@media (min-width:760px){ .how-grid{ grid-template-columns:1fr 1fr; } }
+@media (min-width:1000px){ .how-grid{ grid-template-columns:repeat(4,1fr); gap:var(--sp-4); } }
+.how-step{ position:relative; padding-top:var(--sp-5); border-top:1.5px solid var(--pink); }
+.how-step__num{
+  font-family:var(--font-display); font-style:italic; font-size:2rem; color:var(--pink-deep); line-height:1;
+}
+.how-step__title{ font-weight:800; font-size:var(--fs-body); margin-top:var(--sp-2); }
+.how-step__text{ font-size:var(--fs-small); color:var(--ink-2); margin-top:6px; }
+
+.info-grid{ display:grid; gap:var(--sp-4); }
+@media (min-width:900px){ .info-grid{ grid-template-columns:1fr 1fr; } }
+.info-card{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--r-l);
+  padding:var(--sp-6);
+}
+.info-card h3{ margin-bottom:var(--sp-4); }
+.hours-row{ display:flex; justify-content:space-between; gap:var(--sp-4); padding:10px 0; border-bottom:1px solid var(--line-soft); font-size:var(--fs-small); }
+.hours-row:last-child{ border-bottom:none; }
+.hours-row b{ font-weight:700; }
+.hours-row span{ color:var(--ink-2); }
+.hours-row .day-off{ color:var(--ink-3); }
+.contact-row{ display:flex; gap:var(--sp-3); align-items:flex-start; padding:10px 0; font-size:var(--fs-small); }
+.contact-row svg{ width:16px; height:16px; flex:none; stroke:var(--pink-deep); fill:none; stroke-width:1.8; margin-top:2px; }
+.contact-row b{ display:block; font-size:12px; color:var(--ink-3); font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin-bottom:2px; }
+
+.home-footer{ background:#2E2A25; color:#F4EDE2; padding:var(--sp-8) 0 var(--sp-6); }
+.home-footer .logo__text{ color:#F4EDE2; }
+.home-footer .logo__text small{ color:rgba(244,237,226,.5); }
+.home-footer__grid{ display:grid; gap:var(--sp-6); }
+@media (min-width:760px){ .home-footer__grid{ grid-template-columns:1.2fr 1fr 1fr; } }
+.home-footer__note{ font-size:var(--fs-small); color:rgba(244,237,226,.6); margin-top:var(--sp-3); max-width:32ch; }
+.home-footer__cap{ font-size:var(--fs-caption); font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--pink); margin-bottom:var(--sp-3); }
+.home-footer__links{ display:flex; flex-direction:column; gap:10px; }
+.home-footer__links a{ color:rgba(244,237,226,.85); font-size:var(--fs-small); }
+.home-footer__links a:hover{ color:var(--pink); }
+.home-footer__bottom{
+  margin-top:var(--sp-7); padding-top:var(--sp-5);
+  border-top:1px solid rgba(244,237,226,.14);
+  font-size:12px; color:rgba(244,237,226,.45);
+  display:flex; justify-content:space-between; gap:var(--sp-4); flex-wrap:wrap;
+}
+
+/* Заглушка будущего экрана */
+.stub{ min-height:60vh; display:grid; place-items:center; padding:var(--sp-8) var(--sp-5); text-align:center; }
+.stub__code{
+  font-family:var(--font-display); font-style:italic; font-size:3rem; color:var(--pink-deep);
+}
+
+/* ============================================================
+   АВТОРИЗАЦИЯ (#login / #register / #forgot)
+   ============================================================ */
+.auth-wrap{
+  min-height:calc(100vh - var(--proto-nav-h));
+  display:grid; place-items:center;
+  padding:var(--sp-7) var(--sp-5);
+}
+.auth-card{
+  width:100%; max-width:400px;
+  background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--r-l);
+  padding:var(--sp-6);
+  box-shadow:var(--sh-s);
+}
+.auth-card__logo{ margin-bottom:var(--sp-5); }
+.auth-card__title{ font-family:var(--font-display); font-size:1.9rem; font-weight:600; }
+.auth-card__sub{ font-size:var(--fs-small); color:var(--ink-2); margin-top:6px; }
+.auth-form{ display:flex; flex-direction:column; gap:var(--sp-4); margin-top:var(--sp-5); }
+.auth-links{
+  margin-top:var(--sp-5);
+  display:flex; flex-direction:column; gap:10px; align-items:center;
+  font-size:var(--fs-small); color:var(--ink-2);
+}
+.auth-links a{ color:var(--pink-deep); font-weight:700; }
+.auth-error{ display:none; margin-top:var(--sp-4); }
+.auth-error.is-visible{ display:flex; }
+.auth-demo{ margin-top:var(--sp-5); padding-top:var(--sp-4); border-top:1px dashed var(--line); }
+.auth-demo__btn{
+  background:none; border:none; padding:0;
+  font-size:12px; color:var(--ink-3);
+  text-decoration:underline; text-underline-offset:3px;
+  transition:color .15s ease;
+}
+.auth-demo__btn:hover{ color:var(--pink-deep); }
+.auth-note{
+  background:var(--cream); border-radius:var(--r-m);
+  padding:var(--sp-4);
+  font-size:var(--fs-small); color:var(--ink-2); line-height:1.55;
+  margin-top:var(--sp-4);
+}
+.auth-note b{ color:var(--ink); }
+
+/* ============================================================
+   ЭКРАНЫ ЗАПИСИ (4–8)
+   ============================================================ */
+.booking-page{ padding-bottom:130px; }
+.booking-narrow{ max-width:760px; margin:0 auto; padding-left:var(--sp-5); padding-right:var(--sp-5); }
+.booking-head{ background:var(--surface); border-bottom:1px solid var(--line); }
+.booking-head__in{
+  max-width:var(--wrap); margin:0 auto;
+  padding:var(--sp-3) var(--sp-5);
+  display:flex; align-items:center; gap:var(--sp-3);
+}
+.booking-steps{ padding-top:var(--sp-5); }
+a.step{ text-decoration:none; color:inherit; cursor:pointer; }
+a.step:hover .step__dot{ box-shadow:0 0 0 4px var(--pink-tint); }
+.booking-title{ margin:var(--sp-4) 0 var(--sp-2); }
+.booking-sub{ color:var(--ink-2); font-size:var(--fs-small); margin-bottom:var(--sp-5); }
+.booking-list{ display:flex; flex-direction:column; gap:var(--sp-3); }
+.booking-list .master-card .radio-dot{ margin-left:auto; }
+.tz-note{
+  font-size:var(--fs-small); color:var(--ink-2);
+  display:flex; align-items:center; gap:8px; margin-top:var(--sp-4);
+}
+.tz-note svg{ width:14px; height:14px; stroke:var(--pink-deep); fill:none; stroke-width:1.8; flex:none; }
+
+/* Нижняя закреплённая панель с итогом */
+.booking-bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:150;
+  background:var(--surface);
+  border-top:1px solid var(--line);
+  box-shadow:0 -10px 30px rgba(53,49,43,.08);
+}
+.booking-bar__in{
+  max-width:var(--wrap); margin:0 auto;
+  padding:12px var(--sp-5);
+  display:flex; align-items:center; gap:var(--sp-4);
+}
+.booking-bar__info{ flex:1; min-width:0; }
+.booking-bar__name{
+  font-size:var(--fs-small); font-weight:700;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.booking-bar__meta{ font-size:12px; color:var(--ink-2); margin-top:2px; }
+.booking-bar__price{
+  font-family:var(--font-display); font-weight:600; font-size:1.3rem;
+  white-space:nowrap; flex:none;
+}
+
+/* Сводка на подтверждении */
+.summary{
+  background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--r-l);
+  overflow:hidden;
+}
+.summary__row{
+  display:flex; justify-content:space-between; gap:var(--sp-4);
+  padding:var(--sp-4) var(--sp-5);
+  border-bottom:1px solid var(--line-soft);
+  font-size:var(--fs-small);
+}
+.summary__row:last-child{ border-bottom:none; }
+.summary__label{ color:var(--ink-2); }
+.summary__value{ font-weight:700; text-align:right; }
+.summary__row--total{ background:var(--pink-tint); }
+.summary__row--total .summary__value{
+  font-family:var(--font-display); font-size:1.4rem; font-weight:600; color:var(--pink-deep);
+}
+.confirm-note{
+  margin-top:var(--sp-4);
+  font-size:var(--fs-small); color:var(--ink-2);
+  display:flex; gap:8px; align-items:flex-start; line-height:1.5;
+}
+.confirm-note svg{ width:14px; height:14px; flex:none; margin-top:3px; stroke:var(--pink-deep); fill:none; stroke-width:1.8; }
+.confirm-actions{ display:flex; gap:var(--sp-3); margin-top:var(--sp-5); flex-wrap:wrap; }
+.confirm-actions .btn{ flex:1; min-width:160px; }
+
+/* Успех */
+.success-wrap{
+  display:grid; place-items:center;
+  padding:var(--sp-7) var(--sp-5);
+}
+.success-card{ text-align:center; max-width:440px; }
+.success-check{
+  width:72px; height:72px; border-radius:50%;
+  background:var(--pink);
+  display:grid; place-items:center;
+  margin:0 auto var(--sp-5);
+}
+.success-check svg{ width:30px; height:30px; stroke:var(--pink-deep); stroke-width:2.4; fill:none; }
+.success-sum{
+  margin:var(--sp-4) auto var(--sp-6);
+  font-size:var(--fs-small); color:var(--ink-2); line-height:1.7;
+}
+.success-sum b{ color:var(--ink); }
+
+@media (max-width:520px){
+  .site-header__link--hide-m{ display:none; }
+  .site-header{ flex-wrap:wrap; }
+  .site-header__nav{ margin-left:0; width:100%; justify-content:flex-end; }
+  .booking-head__in .site-header__nav{ width:auto; margin-left:auto; }
+  .btn{ padding:0 var(--sp-4); }
+  .hero__cta .btn{ flex:1; }
+}
+/* ============================================================
+   ИТЕРАЦИЯ 3: кабинет, перенос, админ-панель
+   ============================================================ */
+/* Вкладки (кабинет, меню админки) */
+.tabs{
+  display:inline-flex; gap:2px; padding:3px; max-width:100%;
+  background:var(--cream); border:1px solid var(--line); border-radius:var(--r-pill);
+  overflow-x:auto; scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{ display:none; }
+.tabs a, .tabs button{
+  padding:8px 16px; border-radius:var(--r-pill); border:none; background:none;
+  font-family:inherit; font-size:var(--fs-small); font-weight:700; color:var(--ink-2);
+  cursor:pointer; white-space:nowrap; flex:none;
+  transition:background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.tabs a:hover, .tabs button:hover{ color:var(--ink); }
+.tabs a.is-current, .tabs button.is-current{ background:var(--surface); color:var(--ink); box-shadow:var(--sh-s); }
+
+/* Переключатель «Активна/Отключена» */
+.switch{ position:relative; display:inline-block; width:44px; height:26px; flex:none; }
+.switch input{ position:absolute; opacity:0; width:0; height:0; }
+.switch__track{
+  position:absolute; inset:0; cursor:pointer;
+  background:var(--cream-2); border:1px solid var(--line); border-radius:var(--r-pill);
+  transition:background .15s ease, border-color .15s ease;
+}
+.switch__track::after{
+  content:""; position:absolute; top:2px; left:2px; width:20px; height:20px;
+  border-radius:50%; background:#fff; box-shadow:var(--sh-s); transition:transform .15s ease;
+}
+.switch input:checked + .switch__track{ background:var(--pink-deep); border-color:var(--pink-deep); }
+.switch input:checked + .switch__track::after{ transform:translateX(18px); }
+.switch input:focus-visible + .switch__track{ box-shadow:0 0 0 3px var(--pink-tint); }
+
+/* Селект в стиле полей */
+.select{
+  appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:36px;
+  background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236F665B' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 16px 16px;
+}
+
+/* Фильтры админки */
+.filters{ display:flex; gap:var(--sp-3); flex-wrap:wrap; margin-bottom:var(--sp-5); }
+.filters .field{ flex:1; min-width:130px; }
+
+/* Строки-списки админки */
+.admin-list{ display:flex; flex-direction:column; gap:var(--sp-3); }
+.admin-row{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--r-l);
+  padding:var(--sp-4) var(--sp-5);
+  display:flex; align-items:center; gap:var(--sp-4); flex-wrap:wrap;
+}
+.admin-row__main{ flex:1; min-width:180px; }
+.admin-row__title{ font-weight:700; }
+.admin-row__meta{ font-size:var(--fs-small); color:var(--ink-2); margin-top:2px; }
+.admin-row__side{ display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap; }
+.admin-row.is-off{ opacity:.6; }
+
+/* Шапка раздела: заголовок + действие */
+.page-head{
+  display:flex; align-items:flex-end; justify-content:space-between;
+  gap:var(--sp-4); flex-wrap:wrap; margin-bottom:var(--sp-5);
+}
+.page-head .booking-title, .page-head .booking-sub{ margin-bottom:0; }
+
+/* Широкая модалка с формой */
+.modal--wide{ max-width:560px; }
+.modal__form{ display:flex; flex-direction:column; gap:var(--sp-4); margin-top:var(--sp-4); }
+.modal__hint{ font-size:var(--fs-small); color:var(--ink-2); margin-top:var(--sp-3); }
+
+/* График по дням недели в форме мастера */
+.sched{ display:flex; flex-direction:column; }
+.sched__row{
+  display:grid; grid-template-columns:110px 1fr; align-items:center; gap:var(--sp-3);
+  padding:7px 0; border-bottom:1px solid var(--line-soft);
+}
+.sched__row:last-child{ border-bottom:none; }
+.sched__times{ display:flex; align-items:center; gap:8px; font-size:var(--fs-small); color:var(--ink-2); }
+.sched__times .field__input{ width:86px; padding:8px 10px; min-height:0; text-align:center; }
+.sched__row.is-off .sched__times{ opacity:.35; pointer-events:none; }
+
+/* Слоты внутри модалки переноса */
+.modal .date-strip{ margin-top:var(--sp-3); }
+.modal .slots{ margin-top:var(--sp-3); }
+
+@media (max-width:520px){
+  .admin-row{ padding:var(--sp-4); }
+  .sched__row{ grid-template-columns:92px 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ СЛУЖЕБНОЕ МЕНЮ ПРОТОТИПА (удалить перед продакшеном) ============ -->
+<nav class="proto-nav">
+  <span class="proto-nav__tag">Прототип</span>
+  <span class="proto-nav__title">Алла Зверобоева · онлайн-запись</span>
+  <div class="proto-nav__links">
+    <a href="#design-system" data-proto-link="design-system">Дизайн-система</a>
+    <a href="#home" data-proto-link="home">Главная</a>
+    <a href="#login" data-proto-link="login">Вход</a>
+    <a href="#register" data-proto-link="register">Регистрация</a>
+    <a href="#forgot" data-proto-link="forgot">Восстановление</a>
+    <a href="#booking-service" data-proto-link="booking-service">1·Услуга</a>
+    <a href="#booking-master" data-proto-link="booking-master">2·Мастер</a>
+    <a href="#booking-time" data-proto-link="booking-time">3·Время</a>
+    <a href="#booking-confirm" data-proto-link="booking-confirm">4·Подтверждение</a>
+    <a href="#booking-success" data-proto-link="booking-success">Успех</a>
+    <a href="#cabinet" data-proto-link="cabinet">Кабинет</a>
+    <a href="#reschedule" data-proto-link="reschedule">Перенос</a>
+    <a href="#forbidden" data-proto-link="forbidden">Нет доступа</a>
+    <a href="#admin-appointments" data-proto-link="admin-appointments">Войти как администратор</a>
+    <a href="#admin-services" data-proto-link="admin-services">Админ·Услуги</a>
+    <a href="#admin-masters" data-proto-link="admin-masters">Админ·Мастера</a>
+    <a href="#admin-blocks" data-proto-link="admin-blocks">Админ·Блокировки</a>
+  </div>
+</nav>
+
+<main id="app">
+
+<!-- ============================================================
+     ЭКРАН #design-system
+     ============================================================ -->
+<section class="screen" id="design-system">
+  <div class="wrap">
+
+    <!-- 01 Палитра -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">01</span>
+        <h2 class="ds-section__title">Палитра</h2>
+      </div>
+      <div class="spec" style="margin-bottom:var(--sp-4)">
+        <span class="spec__label">Основные</span>
+        <div class="palette-grid">
+          <div class="swatch"><div class="swatch__color" style="background:var(--milk)"></div><span class="swatch__name">Молочный</span><span class="swatch__hex">--milk · #FBF8F2</span></div>
+          <div class="swatch"><div class="swatch__color" style="background:var(--cream)"></div><span class="swatch__name">Кремовый</span><span class="swatch__hex">--cream · #F4EDE2</span></div>
+          <div class="swatch"><div class="swatch__color" style="background:var(--pink)"></div><span class="swatch__name">Пудрово-розовый</span><span class="swatch__hex">--pink · #E9C3CB</span></div>
+          <div class="swatch"><div class="swatch__color" style="background:var(--pink-deep)"></div><span class="swatch__name">Розовый акцент</span><span class="swatch__hex">--pink-deep · #B87C8A</span></div>
+          <div class="swatch"><div class="swatch__color" style="background:var(--ink)"></div><span class="swatch__name">Графит</span><span class="swatch__hex">--ink · #35312B</span></div>
+          <div class="swatch"><div class="swatch__color" style="background:var(--surface)"></div><span class="swatch__name">Белый (карточки)</span><span class="swatch__hex">--surface · #FFFFFF</span></div>
+        </div>
+      </div>
+      <div class="spec-grid spec-grid--2">
+        <div class="spec">
+          <span class="spec__label">Нейтральные</span>
+          <div class="palette-grid" style="grid-template-columns:repeat(2,1fr)">
+            <div class="swatch"><div class="swatch__color" style="background:var(--ink-2)"></div><span class="swatch__name">Текст вторичный</span><span class="swatch__hex">--ink-2 · #6F665B</span></div>
+            <div class="swatch"><div class="swatch__color" style="background:var(--ink-3)"></div><span class="swatch__name">Подписи</span><span class="swatch__hex">--ink-3 · #A89D8F</span></div>
+            <div class="swatch"><div class="swatch__color" style="background:var(--line)"></div><span class="swatch__name">Разделитель</span><span class="swatch__hex">--line · #EAE1D2</span></div>
+            <div class="swatch"><div class="swatch__color" style="background:var(--cream-2)"></div><span class="swatch__name">Тёплая заливка</span><span class="swatch__hex">--cream-2 · #EFE6D8</span></div>
+          </div>
+        </div>
+        <div class="spec">
+          <span class="spec__label">Семантические</span>
+          <div class="palette-grid" style="grid-template-columns:repeat(2,1fr)">
+            <div class="swatch"><div class="swatch__color" style="background:var(--ok)"></div><span class="swatch__name">Успех</span><span class="swatch__hex">--ok · #7A9B7E</span></div>
+            <div class="swatch"><div class="swatch__color" style="background:var(--warn)"></div><span class="swatch__name">Предупреждение</span><span class="swatch__hex">--warn · #BE8F3C</span></div>
+            <div class="swatch"><div class="swatch__color" style="background:var(--err)"></div><span class="swatch__name">Ошибка</span><span class="swatch__hex">--err · #BE6A5C</span></div>
+            <div class="swatch"><div class="swatch__color" style="background:var(--info)"></div><span class="swatch__name">Инфо</span><span class="swatch__hex">--info · #7E93A8</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 Типографика -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">02</span>
+        <h2 class="ds-section__title">Типографика</h2>
+      </div>
+      <div class="spec">
+        <div>
+          <span class="spec__label">H1 · Cormorant Garamond 600 · clamp(38–54px)</span>
+          <h1 style="margin-top:8px">Красота начинается <em>с записи</em></h1>
+        </div>
+        <div>
+          <span class="spec__label">H2 · Cormorant Garamond 600 · clamp(30–40px)</span>
+          <h2 style="margin-top:8px">Услуги студии</h2>
+        </div>
+        <div>
+          <span class="spec__label">H3 · Cormorant Garamond 600 · 23px</span>
+          <h3 style="margin-top:8px">Маникюр с покрытием гель-лаком</h3>
+        </div>
+        <div>
+          <span class="spec__label">Текст · Manrope 400 · 16px / 1.6</span>
+          <p style="margin-top:8px; max-width:52ch">Небольшая студия маникюра и оформления бровей. Работаем только по предварительной записи, чтобы каждой гостье хватило времени и внимания.</p>
+        </div>
+        <div>
+          <span class="spec__label">Подпись · Manrope 700 · 11px · caps · tracking</span>
+          <p style="margin-top:8px"><span class="eyebrow">Студия маникюра и бровей</span></p>
+        </div>
+        <div>
+          <span class="spec__label">Цены · Cormorant Garamond 600</span>
+          <p style="margin-top:8px; display:flex; align-items:baseline; gap:var(--sp-5)">
+            <span class="price">1 800 ₽</span>
+            <span class="price" style="font-size:1.8rem">3 200 ₽</span>
+            <span class="price"><small>от</small> 300 ₽</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 03 Кнопки -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">03</span>
+        <h2 class="ds-section__title">Кнопки</h2>
+      </div>
+      <div class="spec">
+        <div>
+          <span class="spec__label">Основная · Вторичная · Текстовая · Неактивная</span>
+          <div class="spec__row" style="margin-top:12px">
+            <a class="btn btn--primary" href="#login">Записаться</a>
+            <a class="btn btn--secondary" href="#home">Подробнее</a>
+            <a class="btn btn--text" href="#home">Смотреть все услуги →</a>
+            <button class="btn" disabled>Записаться</button>
+          </div>
+        </div>
+        <div>
+          <span class="spec__label">Компактная · На всю ширину</span>
+          <div class="spec__row" style="margin-top:12px">
+            <a class="btn btn--primary btn--sm" href="#login">Выбрать</a>
+          </div>
+          <div style="margin-top:12px; max-width:340px">
+            <a class="btn btn--primary btn--block" href="#login">Подтвердить запись</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 04 Поля и чекбокс -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">04</span>
+        <h2 class="ds-section__title">Поля формы</h2>
+      </div>
+      <div class="spec-grid spec-grid--3">
+        <div class="spec">
+          <span class="spec__label">Поле ввода · обычное</span>
+          <div class="field">
+            <label class="field__label" for="ds-name">Имя</label>
+            <input class="field__input" id="ds-name" type="text" placeholder="Как к вам обращаться">
+          </div>
+        </div>
+        <div class="spec">
+          <span class="spec__label">Поле ввода · с ошибкой</span>
+          <div class="field field--error">
+            <label class="field__label" for="ds-phone">Телефон</label>
+            <input class="field__input" id="ds-phone" type="tel" value="+7 900">
+            <span class="field__error">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              Введите номер полностью
+            </span>
+          </div>
+        </div>
+        <div class="spec">
+          <span class="spec__label">Чекбокс</span>
+          <label class="check">
+            <input type="checkbox" checked>
+            <span class="check__box"><svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Напомнить о записи за 3 часа по SMS</span>
+          </label>
+          <label class="check">
+            <input type="checkbox">
+            <span class="check__box"><svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Согласна на обработку персональных данных</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 05 Модальное окно и тост -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">05</span>
+        <h2 class="ds-section__title">Модальное окно и сообщение</h2>
+      </div>
+      <div class="spec">
+        <div class="spec__row">
+          <div style="flex:1; min-width:220px">
+            <span class="spec__label">Модальное окно</span>
+            <p class="small muted" style="margin:8px 0 12px">Подтверждение действий: отмена записи, перенос.</p>
+            <button class="btn btn--secondary btn--sm" data-open-modal>Открыть модальное окно</button>
+          </div>
+          <div style="flex:1; min-width:220px">
+            <span class="spec__label">Всплывающее сообщение</span>
+            <p class="small muted" style="margin:8px 0 12px">Короткое подтверждение после успешного действия.</p>
+            <button class="btn btn--secondary btn--sm" data-show-toast>Показать сообщение</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 06 Карточка услуги -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">06</span>
+        <h2 class="ds-section__title">Карточка услуги</h2>
+      </div>
+      <div class="spec-grid spec-grid--2">
+        <div class="spec spec--flat">
+          <span class="spec__label">Обычная</span>
+          <button class="service-card" data-selectable>
+            <span class="service-card__body">
+              <span class="service-card__name">Маникюр с покрытием гель-лаком</span>
+              <span class="service-card__meta" style="display:block">1 ч 30 мин · Анна Ковалева, Елена Смирнова</span>
+            </span>
+            <span class="service-card__side">
+              <span class="price">1 800 ₽</span>
+              <span class="radio-dot"></span>
+            </span>
+          </button>
+        </div>
+        <div class="spec spec--flat">
+          <span class="spec__label">Выбранная</span>
+          <button class="service-card is-selected" data-selectable>
+            <span class="service-card__body">
+              <span class="service-card__name">Ламинирование бровей</span>
+              <span class="service-card__meta" style="display:block">1 ч · Марина Орлова, Елена Смирнова</span>
+            </span>
+            <span class="service-card__side">
+              <span class="price">1 800 ₽</span>
+              <span class="radio-dot"></span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 07 Доп. опция -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">07</span>
+        <h2 class="ds-section__title">Доп. опция «Дизайн ногтей»</h2>
+      </div>
+      <div class="spec spec--flat" style="max-width:560px">
+        <span class="spec__label">Выбор количества ногтей · цена 300 ₽ за 2 ногтя</span>
+        <div class="option-card is-selected">
+          <div class="option-card__head">
+            <span class="option-card__name">Дизайн ногтей</span>
+            <span class="price"><small>от</small> 300 ₽</span>
+          </div>
+          <p class="small muted" style="margin-top:6px">+15–30 мин к длительности основной услуги</p>
+          <div class="chip-row" data-nail-picker>
+            <button class="chip is-selected" data-nails="2">2</button>
+            <button class="chip" data-nails="4">4</button>
+            <button class="chip" data-nails="6">6</button>
+            <button class="chip" data-nails="8">8</button>
+            <button class="chip" data-nails="10">10</button>
+            <span class="caption" style="align-self:center; margin-left:4px">ногтей</span>
+          </div>
+          <div class="option-card__total">
+            <span>Итого за опцию</span>
+            <span class="price" data-nail-total>300 ₽</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 08 Карточка мастера -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">08</span>
+        <h2 class="ds-section__title">Карточка мастера</h2>
+      </div>
+      <div class="spec-grid spec-grid--2">
+        <div class="spec spec--flat">
+          <span class="spec__label">Обычная</span>
+          <button class="master-card" data-selectable>
+            <span class="avatar">АК</span>
+            <span class="master-card__body">
+              <span class="master-card__name" style="display:block">Анна Ковалева</span>
+              <span class="master-card__role" style="display:block">Мастер маникюра и педикюра</span>
+              <span class="master-card__sched" style="display:block">вт–пт · 10:00–18:00</span>
+            </span>
+            <span class="radio-dot"></span>
+          </button>
+        </div>
+        <div class="spec spec--flat">
+          <span class="spec__label">Выбранная</span>
+          <button class="master-card is-selected" data-selectable>
+            <span class="avatar">ЕС</span>
+            <span class="master-card__body">
+              <span class="master-card__name" style="display:block">Елена Смирнова</span>
+              <span class="master-card__role" style="display:block">Универсальный мастер · ногти и брови</span>
+              <span class="master-card__sched" style="display:block">вт, чт, сб · 10:00–19:00</span>
+            </span>
+            <span class="radio-dot"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 09 Лента дат и слоты -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">09</span>
+        <h2 class="ds-section__title">Даты и время</h2>
+      </div>
+      <div class="spec" style="margin-bottom:var(--sp-4)">
+        <span class="spec__label">Лента дат · 30 дней вперёд · выходные (вс, пн) неактивны</span>
+        <div class="date-strip" data-date-strip></div>
+      </div>
+      <div class="spec-grid spec-grid--2">
+        <div class="spec">
+          <span class="spec__label">Слоты времени · свободный и выбранный · занятые не показываем</span>
+          <div class="slots" data-slots></div>
+        </div>
+        <div class="spec">
+          <span class="spec__label">Загрузка свободного времени</span>
+          <div style="display:flex; align-items:center; gap:var(--sp-3); margin-bottom:var(--sp-3)">
+            <span class="spinner"></span>
+            <span class="small muted">Загружаем свободное время…</span>
+          </div>
+          <div class="slots">
+            <span class="slot slot--skeleton"></span>
+            <span class="slot slot--skeleton"></span>
+            <span class="slot slot--skeleton"></span>
+            <span class="slot slot--skeleton"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10 Индикатор шагов -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">10</span>
+        <h2 class="ds-section__title">Индикатор шагов</h2>
+      </div>
+      <div class="spec">
+        <span class="spec__label">Шаг 3 из 4 · выбор времени</span>
+        <div class="steps" style="margin-top:var(--sp-4)">
+          <div class="step is-done"><span class="step__dot">✓</span><span class="step__label">Услуга</span></div>
+          <div class="step is-done"><span class="step__dot">✓</span><span class="step__label">Мастер</span></div>
+          <div class="step is-current"><span class="step__dot">3</span><span class="step__label">Время</span></div>
+          <div class="step"><span class="step__dot">4</span><span class="step__label">Подтверждение</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 11 Бейджи статуса -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">11</span>
+        <h2 class="ds-section__title">Бейджи статуса записи</h2>
+      </div>
+      <div class="spec">
+        <div class="spec__row">
+          <span class="badge badge--ok">Подтверждена</span>
+          <span class="badge badge--cancelled">Отменена</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12 Карточка записи -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">12</span>
+        <h2 class="ds-section__title">Карточка записи · личный кабинет</h2>
+      </div>
+      <div class="spec-grid spec-grid--2">
+        <div class="spec spec--flat">
+          <span class="spec__label">Действия доступны</span>
+          <div class="booking-card">
+            <div class="booking-card__top">
+              <div>
+                <div class="booking-card__service">Маникюр с покрытием гель-лаком</div>
+                <div class="booking-card__meta">
+                  <span class="booking-card__row">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+                    Анна Ковалева
+                  </span>
+                  <span class="booking-card__row">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+                    Четверг, 9 октября · 14:00
+                  </span>
+                </div>
+              </div>
+              <span class="badge badge--ok">Подтверждена</span>
+            </div>
+            <div class="booking-card__foot">
+              <span class="price">1 800 ₽</span>
+              <div class="booking-card__actions">
+                <button class="btn btn--secondary btn--sm">Перенести</button>
+                <button class="btn btn--text">Отменить</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="spec spec--flat">
+          <span class="spec__label">Действия недоступны · меньше 24 часов до записи</span>
+          <div class="booking-card">
+            <div class="booking-card__top">
+              <div>
+                <div class="booking-card__service">Ламинирование бровей</div>
+                <div class="booking-card__meta">
+                  <span class="booking-card__row">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+                    Марина Орлова
+                  </span>
+                  <span class="booking-card__row">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+                    Завтра, 11:30
+                  </span>
+                </div>
+              </div>
+              <span class="badge badge--ok">Подтверждена</span>
+            </div>
+            <div class="booking-card__foot">
+              <span class="price">1 800 ₽</span>
+              <div class="booking-card__actions">
+                <button class="btn btn--sm" disabled>Перенести</button>
+                <button class="btn btn--text" disabled style="background:none">Отменить</button>
+              </div>
+            </div>
+            <p class="booking-card__note">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              Отмена и перенос возможны не позже чем за 24 часа
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 13 Шапка: три роли -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">13</span>
+        <h2 class="ds-section__title">Шапка сайта</h2>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:var(--sp-5)">
+        <div>
+          <span class="role-tag">Гость</span>
+          <div class="site-header">
+            <a class="logo" href="#home">
+              <span class="logo__mark">АЗ</span>
+              <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+            </a>
+            <div class="site-header__nav">
+              <a class="site-header__link" href="#login">Войти</a>
+              <a class="btn btn--primary btn--sm" href="#login">Записаться</a>
+            </div>
+          </div>
+        </div>
+        <div>
+          <span class="role-tag">Клиент</span>
+          <div class="site-header">
+            <a class="logo" href="#home">
+              <span class="logo__mark">АЗ</span>
+              <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+            </a>
+            <div class="site-header__nav">
+              <a class="site-header__link site-header__link--hide-m" href="#home">Мои записи</a>
+              <span class="user-chip"><span class="avatar">ОС</span>Ольга</span>
+              <a class="btn btn--primary btn--sm" href="#login">Записаться</a>
+            </div>
+          </div>
+        </div>
+        <div>
+          <span class="role-tag">Администратор</span>
+          <div class="site-header">
+            <a class="logo" href="#home">
+              <span class="logo__mark">АЗ</span>
+              <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+            </a>
+            <div class="site-header__nav">
+              <a class="site-header__link site-header__link--admin" href="#home">Админ-панель</a>
+              <span class="user-chip"><span class="avatar">АЗ</span>Алла</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 14 Состояния -->
+    <div class="ds-section">
+      <div class="ds-section__head">
+        <span class="ds-section__num">14</span>
+        <h2 class="ds-section__title">Состояния</h2>
+      </div>
+      <div class="spec-grid spec-grid--2">
+        <div class="spec spec--flat">
+          <span class="spec__label">Пустой список записей</span>
+          <div class="state-box">
+            <span class="state-box__icon">
+              <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+            </span>
+            <p class="state-box__title">У вас пока нет записей</p>
+            <p class="small muted" style="max-width:30ch">Выберите услугу и удобное время — это займёт пару минут.</p>
+            <a class="btn btn--primary" href="#login" style="margin-top:var(--sp-2)">Записаться</a>
+          </div>
+        </div>
+        <div class="spec spec--flat">
+          <span class="spec__label">Ошибка при выборе времени</span>
+          <div class="alert">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+            <span><b>Это время уже заняли.</b><br>Выберите другое — свободные слоты обновлены.</span>
+          </div>
+          <div class="slots" style="margin-top:var(--sp-4)">
+            <button class="slot">10:00</button>
+            <button class="slot">11:30</button>
+            <button class="slot is-selected">13:00</button>
+            <button class="slot">15:30</button>
+            <button class="slot">17:00</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #home
+     ============================================================ -->
+<section class="screen" id="home">
+
+  <!-- Шапка гостя -->
+  <header class="home-header">
+    <div class="home-header__in">
+      <a class="logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <nav class="home-header__nav">
+        <a class="site-header__link site-header__link--hide-m" href="#home-services">Услуги</a>
+        <a class="site-header__link site-header__link--hide-m" href="#home-masters">Мастера</a>
+        <a class="site-header__link" href="#login">Войти</a>
+        <a class="btn btn--primary btn--sm" href="#login">Записаться</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Первый экран -->
+  <div class="hero">
+    <div class="wrap hero__grid">
+      <div>
+        <span class="eyebrow">Студия маникюра и бровей</span>
+        <h1 class="hero__title">Красивые руки начинаются <em>с&nbsp;записи</em></h1>
+        <p class="hero__text">Небольшая студия с бережным отношением к деталям. Маникюр, наращивание и оформление бровей — спокойно, аккуратно и в точно назначенное время.</p>
+        <div class="hero__cta">
+          <a class="btn btn--primary" href="#login">Записаться онлайн</a>
+          <a class="btn btn--secondary" href="#home-services">Смотреть услуги</a>
+        </div>
+        <p class="hero__note">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 3"/></svg>
+          Только по предварительной записи · вт–сб 10:00–20:00
+        </p>
+      </div>
+      <div class="hero__visual" aria-hidden="true">
+        <div class="hero__monogram">
+          <b>АЗ</b>
+          <span>маникюр · брови</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Услуги -->
+  <div class="home-section home-section--cream" id="home-services">
+    <div class="wrap">
+      <div class="home-section__head">
+        <span class="eyebrow">01 · Услуги</span>
+        <h2>Услуги и цены</h2>
+        <p class="lead">Выберите услугу — при записи к ней можно добавить дизайн ногтей.</p>
+      </div>
+      <div class="svc-list">
+        <div>
+          <div class="svc-row">
+            <div>
+              <div class="svc-row__name">Маникюр с покрытием гель-лаком</div>
+              <div class="svc-row__meta">1 ч 30 мин</div>
+            </div>
+            <span class="svc-row__leader"></span>
+            <span class="price">1 800 ₽</span>
+          </div>
+          <div class="svc-row">
+            <div>
+              <div class="svc-row__name">Маникюр и педикюр</div>
+              <div class="svc-row__meta">2 ч 30 мин</div>
+            </div>
+            <span class="svc-row__leader"></span>
+            <span class="price">3 200 ₽</span>
+          </div>
+          <div class="svc-row">
+            <div>
+              <div class="svc-row__name">Наращивание ногтей</div>
+              <div class="svc-row__meta">2 ч 30 мин</div>
+            </div>
+            <span class="svc-row__leader"></span>
+            <span class="price">2 800 ₽</span>
+          </div>
+        </div>
+        <div>
+          <div class="svc-row">
+            <div>
+              <div class="svc-row__name">Дизайн ногтей <span class="svc-row__tag">доп. опция</span></div>
+              <div class="svc-row__meta">+15–30 мин · выбор 2/4/6/8/10 ногтей</div>
+            </div>
+            <span class="svc-row__leader"></span>
+            <span class="price"><small>от</small> 300 ₽</span>
+          </div>
+          <div class="svc-row">
+            <div>
+              <div class="svc-row__name">Коррекция и окрашивание бровей</div>
+              <div class="svc-row__meta">40 мин</div>
+            </div>
+            <span class="svc-row__leader"></span>
+            <span class="price">1 200 ₽</span>
+          </div>
+          <div class="svc-row">
+            <div>
+              <div class="svc-row__name">Ламинирование бровей</div>
+              <div class="svc-row__meta">1 ч</div>
+            </div>
+            <span class="svc-row__leader"></span>
+            <span class="price">1 800 ₽</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:var(--sp-6)">
+        <a class="btn btn--primary" href="#login">Записаться онлайн</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Мастера -->
+  <div class="home-section" id="home-masters">
+    <div class="wrap">
+      <div class="home-section__head">
+        <span class="eyebrow">02 · Мастера</span>
+        <h2>Наши мастера</h2>
+        <p class="lead">У каждого мастера — своё расписание. Свободное время видно при записи.</p>
+      </div>
+      <div class="masters-grid">
+        <div class="master-tile">
+          <span class="avatar avatar--lg">АК</span>
+          <div>
+            <div class="master-tile__name">Анна Ковалева</div>
+            <div class="master-tile__role">Мастер маникюра и педикюра</div>
+          </div>
+          <p class="master-tile__sched">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 3"/></svg>
+            вт–пт · 10:00–18:00
+          </p>
+        </div>
+        <div class="master-tile">
+          <span class="avatar avatar--lg">МО</span>
+          <div>
+            <div class="master-tile__name">Марина Орлова</div>
+            <div class="master-tile__role">Мастер по бровям</div>
+          </div>
+          <p class="master-tile__sched">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 3"/></svg>
+            ср–сб · 11:00–20:00
+          </p>
+        </div>
+        <div class="master-tile">
+          <span class="avatar avatar--lg">ЕС</span>
+          <div>
+            <div class="master-tile__name">Елена Смирнова</div>
+            <div class="master-tile__role">Универсальный мастер · ногти и брови</div>
+          </div>
+          <p class="master-tile__sched">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 3"/></svg>
+            вт, чт, сб · 10:00–19:00
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Как проходит запись -->
+  <div class="home-section home-section--cream">
+    <div class="wrap">
+      <div class="home-section__head">
+        <span class="eyebrow">03 · Запись</span>
+        <h2>Как проходит запись</h2>
+      </div>
+      <div class="how-grid">
+        <div class="how-step">
+          <span class="how-step__num">01</span>
+          <div class="how-step__title">Выберите услугу</div>
+          <p class="how-step__text">Маникюр, педикюр, наращивание или брови — с длительностью и ценой заранее.</p>
+        </div>
+        <div class="how-step">
+          <span class="how-step__num">02</span>
+          <div class="how-step__title">Выберите мастера</div>
+          <p class="how-step__text">Каждая услуга привязана к мастерам, которые её выполняют.</p>
+        </div>
+        <div class="how-step">
+          <span class="how-step__num">03</span>
+          <div class="how-step__title">Подберите время</div>
+          <p class="how-step__text">Календарь на 30 дней вперёд показывает только свободные окна.</p>
+        </div>
+        <div class="how-step">
+          <span class="how-step__num">04</span>
+          <div class="how-step__title">Подтвердите запись</div>
+          <p class="how-step__text">Мы напомним о визите. Перенос и отмена — не позже чем за 24 часа.</p>
+        </div>
+      </div>
+      <div style="margin-top:var(--sp-7)">
+        <a class="btn btn--primary" href="#login">Записаться онлайн</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Режим работы и контакты -->
+  <div class="home-section" id="home-contacts">
+    <div class="wrap">
+      <div class="home-section__head">
+        <span class="eyebrow">04 · Контакты</span>
+        <h2>Режим работы и контакты</h2>
+      </div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h3>Режим работы</h3>
+          <div class="hours-row"><b>Вторник — суббота</b><span>10:00–20:00</span></div>
+          <div class="hours-row"><b>Воскресенье, понедельник</b><span class="day-off">выходной</span></div>
+          <p class="small muted" style="margin-top:var(--sp-4)">Приём — только по предварительной записи. Пожалуйста, приходите вовремя: окно записи рассчитано именно на вас.</p>
+        </div>
+        <div class="info-card">
+          <h3>Контакты</h3>
+          <div class="contact-row">
+            <svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/></svg>
+            <div><b>Телефон</b><a href="tel:+79000000000" style="color:var(--ink)">+7 (900) 000-00-00</a></div>
+          </div>
+          <div class="contact-row">
+            <svg viewBox="0 0 24 24"><path d="M12 21s-7-5.3-7-11a7 7 0 1 1 14 0c0 5.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            <div><b>Адрес</b>ул. Цветочная, 12, 2 этаж</div>
+          </div>
+          <div class="contact-row">
+            <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/></svg>
+            <div><b>Почта</b><a href="mailto:hello@zveroboeva.ru" style="color:var(--ink)">hello@zveroboeva.ru</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Футер -->
+  <footer class="home-footer">
+    <div class="wrap">
+      <div class="home-footer__grid">
+        <div>
+          <a class="logo" href="#home">
+            <span class="logo__mark">АЗ</span>
+            <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+          </a>
+          <p class="home-footer__note">Небольшая студия маникюра и оформления бровей. Работаем только по предварительной записи.</p>
+        </div>
+        <div>
+          <p class="home-footer__cap">Навигация</p>
+          <div class="home-footer__links">
+            <a href="#home-services">Услуги и цены</a>
+            <a href="#home-masters">Мастера</a>
+            <a href="#home-contacts">Контакты</a>
+          </div>
+        </div>
+        <div>
+          <p class="home-footer__cap">Запись</p>
+          <div class="home-footer__links">
+            <a href="#login">Записаться онлайн</a>
+            <a href="#login">Войти в личный кабинет</a>
+          </div>
+        </div>
+      </div>
+      <div class="home-footer__bottom">
+        <span>© 2026 Студия «Алла Зверобоева»</span>
+        <span>вт–сб · 10:00–20:00</span>
+      </div>
+    </div>
+  </footer>
+
+</section>
+
+<!-- ============================================================
+     ЭКРАН #login — вход
+     ============================================================ -->
+<section class="screen" id="login">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <a class="logo auth-card__logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <h2 class="auth-card__title">Вход</h2>
+      <p class="auth-card__sub">Войдите, чтобы записаться и управлять своими записями.</p>
+      <div class="auth-form">
+        <div class="field">
+          <label class="field__label" for="login-email">Email</label>
+          <input class="field__input" id="login-email" type="email" placeholder="you@example.ru" autocomplete="email">
+        </div>
+        <div class="field">
+          <label class="field__label" for="login-pass">Пароль</label>
+          <input class="field__input" id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <a class="btn btn--primary btn--block" href="#booking-service">Войти</a>
+      </div>
+      <div class="auth-error alert" id="login-error">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <span>Неверный email или пароль</span>
+      </div>
+      <div class="auth-links">
+        <a href="#forgot">Забыли пароль?</a>
+        <span>Нет аккаунта? <a href="#register">Зарегистрироваться</a></span>
+      </div>
+      <div class="auth-demo">
+        <button class="auth-demo__btn" type="button" data-demo-toggle="#login-error">Демо: показать ошибку входа</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #register — регистрация
+     ============================================================ -->
+<section class="screen" id="register">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <a class="logo auth-card__logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <h2 class="auth-card__title">Регистрация</h2>
+      <p class="auth-card__sub">Займёт меньше минуты — понадобятся только имя и email.</p>
+      <div class="auth-form">
+        <div class="field">
+          <label class="field__label" for="reg-name">Имя</label>
+          <input class="field__input" id="reg-name" type="text" placeholder="Как к вам обращаться" autocomplete="name">
+        </div>
+        <div class="field" id="reg-email-field">
+          <label class="field__label" for="reg-email">Email</label>
+          <input class="field__input" id="reg-email" type="email" placeholder="you@example.ru" autocomplete="email">
+          <span class="field__error" id="reg-email-error" hidden>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+            Пользователь с таким email уже зарегистрирован
+          </span>
+        </div>
+        <div class="field">
+          <label class="field__label" for="reg-pass">Пароль</label>
+          <input class="field__input" id="reg-pass" type="password" placeholder="Придумайте пароль" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label class="field__label" for="reg-pass2">Повтор пароля</label>
+          <input class="field__input" id="reg-pass2" type="password" placeholder="Повторите пароль" autocomplete="new-password">
+        </div>
+        <a class="btn btn--primary btn--block" href="#booking-service">Зарегистрироваться</a>
+      </div>
+      <div class="auth-links">
+        <span>Уже есть аккаунт? <a href="#login">Войти</a></span>
+      </div>
+      <div class="auth-demo">
+        <button class="auth-demo__btn" type="button" data-demo-register>Демо: email уже зарегистрирован</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #forgot — восстановление пароля (заглушка)
+     ============================================================ -->
+<section class="screen" id="forgot">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <a class="logo auth-card__logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <h2 class="auth-card__title">Восстановление пароля</h2>
+      <div class="auth-form">
+        <div class="field">
+          <label class="field__label" for="forgot-email">Email</label>
+          <input class="field__input" id="forgot-email" type="email" placeholder="you@example.ru" autocomplete="email">
+        </div>
+      </div>
+      <div class="auth-note">
+        Функция появится позже. Пока обратитесь к администратору салона:
+        <b>+7 (900) 000-00-00</b>
+      </div>
+      <div class="auth-links">
+        <a href="#login">← Вернуться ко входу</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     ЭКРАН #booking-service — шаг 1: услуга
+     ============================================================ -->
+<section class="screen booking-page" id="booking-service">
+  <header class="booking-head">
+    <div class="booking-head__in">
+      <a class="logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <div class="site-header__nav">
+        <a class="site-header__link site-header__link--hide-m" href="#cabinet">Мои записи</a>
+        <span class="user-chip"><span class="avatar">ОС</span>Ольга</span>
+      </div>
+    </div>
+  </header>
+  <div class="booking-narrow booking-steps"><div class="steps" data-steps="1"></div></div>
+  <div class="booking-narrow">
+    <h2 class="booking-title">Выберите услугу</h2>
+    <p class="booking-sub">Одна основная услуга. К ногтевым услугам можно добавить дизайн ногтей.</p>
+    <div class="booking-list" id="bk-services">
+      <button class="service-card" type="button" data-service="manicure" data-selectable>
+        <span class="service-card__body">
+          <span class="service-card__name">Маникюр с покрытием гель-лаком</span>
+          <span class="service-card__meta" style="display:block">1 ч 30 мин</span>
+        </span>
+        <span class="service-card__side"><span class="price">1 800 ₽</span><span class="radio-dot"></span></span>
+      </button>
+      <button class="service-card" type="button" data-service="mani_pedi" data-selectable>
+        <span class="service-card__body">
+          <span class="service-card__name">Маникюр и педикюр</span>
+          <span class="service-card__meta" style="display:block">2 ч 30 мин</span>
+        </span>
+        <span class="service-card__side"><span class="price">3 200 ₽</span><span class="radio-dot"></span></span>
+      </button>
+      <button class="service-card" type="button" data-service="extension" data-selectable>
+        <span class="service-card__body">
+          <span class="service-card__name">Наращивание ногтей</span>
+          <span class="service-card__meta" style="display:block">2 ч 30 мин</span>
+        </span>
+        <span class="service-card__side"><span class="price">2 800 ₽</span><span class="radio-dot"></span></span>
+      </button>
+      <button class="service-card" type="button" data-service="brows_corr" data-selectable>
+        <span class="service-card__body">
+          <span class="service-card__name">Коррекция и окрашивание бровей</span>
+          <span class="service-card__meta" style="display:block">40 мин</span>
+        </span>
+        <span class="service-card__side"><span class="price">1 200 ₽</span><span class="radio-dot"></span></span>
+      </button>
+      <button class="service-card" type="button" data-service="brows_lam" data-selectable>
+        <span class="service-card__body">
+          <span class="service-card__name">Ламинирование бровей</span>
+          <span class="service-card__meta" style="display:block">1 ч</span>
+        </span>
+        <span class="service-card__side"><span class="price">1 800 ₽</span><span class="radio-dot"></span></span>
+      </button>
+    </div>
+    <div class="option-card" id="bk-design" hidden style="margin-top:var(--sp-4)">
+      <div class="option-card__head">
+        <span class="option-card__name">Дизайн ногтей</span>
+        <span class="price"><small>от</small> 300 ₽</span>
+      </div>
+      <p class="small muted" style="margin-top:6px">Выполняет мастер Анна Ковалева · 300 ₽ за каждые 2 ногтя</p>
+      <div class="chip-row" id="bk-nails">
+        <button class="chip" type="button" data-n="2">2</button>
+        <button class="chip" type="button" data-n="4">4</button>
+        <button class="chip" type="button" data-n="6">6</button>
+        <button class="chip" type="button" data-n="8">8</button>
+        <button class="chip" type="button" data-n="10">10</button>
+        <span class="caption" style="align-self:center; margin-left:4px">ногтей</span>
+      </div>
+      <p class="small muted" style="margin-top:var(--sp-3)">2–4 ногтя — +15 мин · 6–10 ногтей — +30 мин к основной услуге</p>
+    </div>
+  </div>
+  <div class="booking-bar">
+    <div class="booking-bar__in">
+      <div class="booking-bar__info">
+        <div class="booking-bar__name" data-bk-name>Услуга не выбрана</div>
+        <div class="booking-bar__meta" data-bk-meta>—</div>
+      </div>
+      <span class="booking-bar__price" data-bk-price>—</span>
+      <a class="btn btn--primary btn--disabled" id="bk-next-1" href="#booking-master">Далее</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #booking-master — шаг 2: мастер
+     ============================================================ -->
+<section class="screen booking-page" id="booking-master">
+  <header class="booking-head">
+    <div class="booking-head__in">
+      <a class="logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <div class="site-header__nav">
+        <a class="site-header__link site-header__link--hide-m" href="#cabinet">Мои записи</a>
+        <span class="user-chip"><span class="avatar">ОС</span>Ольга</span>
+      </div>
+    </div>
+  </header>
+  <div class="booking-narrow booking-steps"><div class="steps" data-steps="2"></div></div>
+  <div class="booking-narrow">
+    <h2 class="booking-title">Выберите мастера</h2>
+    <p class="booking-sub" id="bk-master-sub">Показаны только мастера, которые выполняют выбранную услугу.</p>
+    <div class="booking-list" id="bk-masters"></div>
+  </div>
+  <div class="booking-bar">
+    <div class="booking-bar__in">
+      <div class="booking-bar__info">
+        <div class="booking-bar__name" data-bk-name>—</div>
+        <div class="booking-bar__meta" data-bk-meta>—</div>
+      </div>
+      <span class="booking-bar__price" data-bk-price>—</span>
+      <a class="btn btn--primary btn--disabled" id="bk-next-2" href="#booking-time">Далее</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #booking-time — шаг 3: дата и время
+     ============================================================ -->
+<section class="screen booking-page" id="booking-time">
+  <header class="booking-head">
+    <div class="booking-head__in">
+      <a class="logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <div class="site-header__nav">
+        <a class="site-header__link site-header__link--hide-m" href="#cabinet">Мои записи</a>
+        <span class="user-chip"><span class="avatar">ОС</span>Ольга</span>
+      </div>
+    </div>
+  </header>
+  <div class="booking-narrow booking-steps"><div class="steps" data-steps="3"></div></div>
+  <div class="booking-narrow">
+    <h2 class="booking-title">Выберите дату и время</h2>
+    <p class="booking-sub" id="bk-time-sub">Лента на 30 дней вперёд — активны только рабочие дни мастера.</p>
+    <div class="date-strip" id="bk-dates"></div>
+    <p class="tz-note">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 3"/></svg>
+      Время московское
+    </p>
+    <div style="margin-top:var(--sp-5)">
+      <p class="small muted" id="bk-slots-hint">Выберите день в ленте выше.</p>
+      <div id="bk-slots-loading" hidden>
+        <div style="display:flex; align-items:center; gap:var(--sp-3); margin-bottom:var(--sp-3)">
+          <span class="spinner"></span>
+          <span class="small muted">Загружаем свободное время…</span>
+        </div>
+        <div class="slots">
+          <span class="slot slot--skeleton"></span><span class="slot slot--skeleton"></span>
+          <span class="slot slot--skeleton"></span><span class="slot slot--skeleton"></span>
+          <span class="slot slot--skeleton"></span><span class="slot slot--skeleton"></span>
+        </div>
+      </div>
+      <div class="slots" id="bk-slots" hidden></div>
+      <div class="state-box" id="bk-slots-empty" hidden style="padding:var(--sp-5)">
+        <p class="state-box__title" style="font-size:1.15rem">На эту дату свободного времени нет</p>
+        <p class="small muted">Выберите другой день</p>
+      </div>
+    </div>
+  </div>
+  <div class="booking-bar">
+    <div class="booking-bar__in">
+      <div class="booking-bar__info">
+        <div class="booking-bar__name" data-bk-name>—</div>
+        <div class="booking-bar__meta" data-bk-meta>—</div>
+      </div>
+      <span class="booking-bar__price" data-bk-price>—</span>
+      <a class="btn btn--primary btn--disabled" id="bk-next-3" href="#booking-confirm">Далее</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #booking-confirm — шаг 4: подтверждение
+     ============================================================ -->
+<section class="screen booking-page" id="booking-confirm">
+  <header class="booking-head">
+    <div class="booking-head__in">
+      <a class="logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <div class="site-header__nav">
+        <a class="site-header__link site-header__link--hide-m" href="#cabinet">Мои записи</a>
+        <span class="user-chip"><span class="avatar">ОС</span>Ольга</span>
+      </div>
+    </div>
+  </header>
+  <div class="booking-narrow booking-steps"><div class="steps" data-steps="4"></div></div>
+  <div class="booking-narrow">
+    <h2 class="booking-title">Проверьте запись</h2>
+    <p class="booking-sub">Если всё верно — подтвердите. Вернуться и изменить можно на любом шаге.</p>
+    <div class="summary">
+      <div class="summary__row"><span class="summary__label">Услуга</span><span class="summary__value" id="cf-service">—</span></div>
+      <div class="summary__row" id="cf-option-row" hidden><span class="summary__label">Доп. опция</span><span class="summary__value" id="cf-option">—</span></div>
+      <div class="summary__row"><span class="summary__label">Мастер</span><span class="summary__value" id="cf-master">—</span></div>
+      <div class="summary__row"><span class="summary__label">Дата и время</span><span class="summary__value" id="cf-when">—</span></div>
+      <div class="summary__row"><span class="summary__label">Длительность</span><span class="summary__value" id="cf-duration">—</span></div>
+      <div class="summary__row summary__row--total"><span class="summary__label" style="color:var(--ink); font-weight:700">Итого</span><span class="summary__value" id="cf-total">—</span></div>
+    </div>
+    <p class="confirm-note">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      Оплата в салоне. Отменить или перенести запись можно не позже чем за 24 часа.
+    </p>
+    <div class="auth-error alert" id="confirm-error">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span>Это время уже заняли, выберите другое.</span>
+      <a class="btn btn--secondary btn--sm" href="#booking-time" style="margin-left:auto; flex:none">Выбрать другое время</a>
+    </div>
+    <div class="confirm-actions">
+      <a class="btn btn--secondary" href="#booking-time">Изменить</a>
+      <a class="btn btn--primary" href="#booking-success">Подтвердить запись</a>
+    </div>
+    <div class="auth-demo" style="max-width:none">
+      <button class="auth-demo__btn" type="button" data-demo-toggle="#confirm-error">Демо: «Это время уже заняли»</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #booking-success — запись создана
+     ============================================================ -->
+<section class="screen booking-page" id="booking-success">
+  <header class="booking-head">
+    <div class="booking-head__in">
+      <a class="logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <div class="site-header__nav">
+        <a class="site-header__link site-header__link--hide-m" href="#cabinet">Мои записи</a>
+        <span class="user-chip"><span class="avatar">ОС</span>Ольга</span>
+      </div>
+    </div>
+  </header>
+  <div class="booking-narrow booking-steps"><div class="steps" data-steps="5"></div></div>
+  <div class="booking-narrow success-wrap">
+    <div class="success-card">
+      <span class="success-check"><svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg></span>
+      <h2>Вы записаны!</h2>
+      <p class="success-sum" id="bk-success-sum">—</p>
+      <div class="confirm-actions" style="justify-content:center">
+        <a class="btn btn--secondary" href="#home">На главную</a>
+        <a class="btn btn--primary" href="#cabinet">Мои записи</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #cabinet — личный кабинет «Мои записи»
+     ============================================================ -->
+<section class="screen" id="cabinet">
+  <header class="booking-head">
+    <div class="booking-head__in">
+      <a class="logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <div class="site-header__nav">
+        <a class="site-header__link site-header__link--hide-m" href="#cabinet">Мои записи</a>
+        <a class="site-header__link site-header__link--hide-m" href="#home">Выйти</a>
+        <span class="user-chip"><span class="avatar">ИП</span>Ирина</span>
+      </div>
+    </div>
+  </header>
+  <div class="booking-narrow" style="padding-top:var(--sp-6); padding-bottom:var(--sp-8)">
+    <div class="page-head">
+      <div>
+        <h2 class="booking-title">Мои записи</h2>
+        <p class="booking-sub">Ирина, здесь все ваши визиты — предстоящие и прошедшие.</p>
+      </div>
+      <a class="btn btn--primary" href="#booking-service">Записаться</a>
+    </div>
+    <div class="tabs" id="cab-tabs" style="margin-bottom:var(--sp-5)">
+      <button type="button" class="is-current" data-tab="upcoming">Предстоящие</button>
+      <button type="button" data-tab="past">Прошедшие</button>
+    </div>
+
+    <div class="admin-list" id="cab-upcoming">
+      <!-- Запись 1: до визита больше 24 часов — действия доступны -->
+      <div class="booking-card" id="cab-card-1">
+        <div class="booking-card__top">
+          <div>
+            <div class="booking-card__service">Маникюр с покрытием гель-лаком</div>
+            <div class="booking-card__meta">
+              <span class="booking-card__row">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+                Анна Ковалева
+              </span>
+              <span class="booking-card__row">
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+                <span id="cab-when-1">ср, 10:00–11:30</span>
+              </span>
+            </div>
+          </div>
+          <span class="badge badge--ok" id="cab-badge-1">Подтверждена</span>
+        </div>
+        <div class="booking-card__foot">
+          <span class="price">1 800 ₽</span>
+          <div class="booking-card__actions" id="cab-actions-1">
+            <a class="btn btn--secondary btn--sm" href="#reschedule">Перенести</a>
+            <button class="btn btn--text" type="button" data-open-modal="#modal-cancel">Отменить</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Запись 2: меньше 24 часов — действия недоступны -->
+      <div class="booking-card">
+        <div class="booking-card__top">
+          <div>
+            <div class="booking-card__service">Коррекция и окрашивание бровей</div>
+            <div class="booking-card__meta">
+              <span class="booking-card__row">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+                Марина Орлова
+              </span>
+              <span class="booking-card__row">
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+                завтра, 12:00–12:40
+              </span>
+            </div>
+          </div>
+          <span class="badge badge--ok">Подтверждена</span>
+        </div>
+        <div class="booking-card__foot">
+          <span class="price">1 200 ₽</span>
+          <div class="booking-card__actions">
+            <button class="btn btn--secondary btn--sm" type="button" disabled>Перенести</button>
+            <button class="btn btn--text" type="button" disabled style="background:none">Отменить</button>
+          </div>
+        </div>
+        <p class="booking-card__note">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          Отмена и перенос возможны не позже чем за 24 часа. Свяжитесь с администратором: +7 (900) 000-00-00
+        </p>
+      </div>
+
+      <!-- Запись 3: отменена администратором -->
+      <div class="booking-card">
+        <div class="booking-card__top">
+          <div>
+            <div class="booking-card__service">Ламинирование бровей</div>
+            <div class="booking-card__meta">
+              <span class="booking-card__row">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+                Елена Смирнова
+              </span>
+              <span class="booking-card__row">
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+                пт, 14:00–15:00
+              </span>
+            </div>
+          </div>
+          <span class="badge badge--cancelled">Отменена</span>
+        </div>
+        <div class="booking-card__foot">
+          <span class="price">1 800 ₽</span>
+        </div>
+        <p class="booking-card__note">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          Отменена администратором
+        </p>
+      </div>
+    </div>
+
+    <div class="admin-list" id="cab-past" hidden>
+      <div class="booking-card">
+        <div class="booking-card__top">
+          <div>
+            <div class="booking-card__service">Маникюр с покрытием гель-лаком</div>
+            <div class="booking-card__meta">
+              <span class="booking-card__row">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+                Анна Ковалева
+              </span>
+              <span class="booking-card__row">
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+                ср, 10:00–11:30
+              </span>
+            </div>
+          </div>
+          <span class="badge badge--info">Завершена</span>
+        </div>
+        <div class="booking-card__foot">
+          <span class="price">1 800 ₽</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #reschedule — перенос записи
+     ============================================================ -->
+<section class="screen booking-page" id="reschedule">
+  <header class="booking-head">
+    <div class="booking-head__in">
+      <a class="logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <div class="site-header__nav">
+        <a class="site-header__link site-header__link--hide-m" href="#cabinet">Мои записи</a>
+        <a class="site-header__link site-header__link--hide-m" href="#home">Выйти</a>
+        <span class="user-chip"><span class="avatar">ИП</span>Ирина</span>
+      </div>
+    </div>
+  </header>
+  <div class="booking-narrow">
+    <h2 class="booking-title">Перенести запись</h2>
+    <p class="booking-sub">Услуга и мастер не меняются — выберите новые дату и время.</p>
+    <div class="summary" style="margin-bottom:var(--sp-6)">
+      <div class="summary__row"><span class="summary__label">Услуга</span><span class="summary__value">Маникюр с покрытием гель-лаком</span></div>
+      <div class="summary__row"><span class="summary__label">Мастер</span><span class="summary__value">Анна Ковалева</span></div>
+      <div class="summary__row"><span class="summary__label">Текущее время</span><span class="summary__value" id="rs-current">ср, 10:00–11:30</span></div>
+      <div class="summary__row"><span class="summary__label">Длительность</span><span class="summary__value">1 ч 30 мин</span></div>
+    </div>
+    <div class="date-strip" id="rs-dates"></div>
+    <p class="tz-note">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 3"/></svg>
+      Время московское
+    </p>
+    <div style="margin-top:var(--sp-5)">
+      <p class="small muted" id="rs-hint">Выберите день в ленте выше.</p>
+      <div id="rs-loading" hidden>
+        <div style="display:flex; align-items:center; gap:var(--sp-3); margin-bottom:var(--sp-3)">
+          <span class="spinner"></span>
+          <span class="small muted">Загружаем свободное время…</span>
+        </div>
+        <div class="slots">
+          <span class="slot slot--skeleton"></span><span class="slot slot--skeleton"></span>
+          <span class="slot slot--skeleton"></span><span class="slot slot--skeleton"></span>
+        </div>
+      </div>
+      <div class="slots" id="rs-slots" hidden></div>
+      <div class="state-box" id="rs-empty" hidden style="padding:var(--sp-5)">
+        <p class="state-box__title" style="font-size:1.15rem">На эту дату свободного времени нет</p>
+        <p class="small muted">Выберите другой день</p>
+      </div>
+    </div>
+    <div class="confirm-actions" style="margin-top:var(--sp-6)">
+      <a class="btn btn--secondary" href="#cabinet">Назад</a>
+      <button class="btn btn--primary btn--disabled" type="button" id="rs-confirm">Перенести на выбранное время</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #forbidden — нет доступа
+     ============================================================ -->
+<section class="screen" id="forbidden">
+  <header class="booking-head">
+    <div class="booking-head__in">
+      <a class="logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <div class="site-header__nav">
+        <a class="site-header__link site-header__link--hide-m" href="#cabinet">Мои записи</a>
+        <a class="site-header__link site-header__link--hide-m" href="#home">Выйти</a>
+        <span class="user-chip"><span class="avatar">ИП</span>Ирина</span>
+      </div>
+    </div>
+  </header>
+  <div class="booking-narrow" style="padding-top:var(--sp-8); padding-bottom:var(--sp-8)">
+    <div class="state-box" style="padding:var(--sp-8) var(--sp-6)">
+      <span class="state-box__icon">
+        <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      </span>
+      <p class="state-box__title">Нет доступа</p>
+      <p class="small muted" style="max-width:36ch">У вас нет прав для просмотра этой страницы.</p>
+      <a class="btn btn--primary" href="#home" style="margin-top:var(--sp-3)">На главную</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #admin-appointments — админка: записи
+     ============================================================ -->
+<section class="screen" id="admin-appointments">
+  <header class="booking-head">
+    <div class="booking-head__in">
+      <a class="logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <div class="site-header__nav">
+        <a class="site-header__link site-header__link--admin site-header__link--hide-m" href="#admin-appointments">Админ-панель</a>
+        <a class="site-header__link site-header__link--hide-m" href="#home">Выйти</a>
+        <span class="user-chip"><span class="avatar">АЗ</span>Алла</span>
+      </div>
+    </div>
+  </header>
+  <div class="booking-narrow" style="padding-top:var(--sp-5); padding-bottom:var(--sp-8)">
+    <nav class="tabs" style="margin-bottom:var(--sp-6)">
+      <a href="#admin-appointments" class="is-current">Записи</a>
+      <a href="#admin-services">Услуги</a>
+      <a href="#admin-masters">Мастера</a>
+      <a href="#admin-blocks">Блокировки</a>
+    </nav>
+    <div class="page-head">
+      <div>
+        <h2 class="booking-title">Записи</h2>
+        <p class="booking-sub">Все записи всех клиентов. Администратор может переносить и отменять без ограничения 24 часов.</p>
+      </div>
+    </div>
+    <div class="filters">
+      <label class="field">
+        <span class="field__label">Дата</span>
+        <select class="field__input select" id="af-date">
+          <option value="">Все даты</option>
+          <option value="ср">Среда</option>
+          <option value="чт">Четверг</option>
+          <option value="пт">Пятница</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="field__label">Мастер</span>
+        <select class="field__input select" id="af-master">
+          <option value="">Все мастера</option>
+          <option value="anna">Анна Ковалева</option>
+          <option value="marina">Марина Орлова</option>
+          <option value="elena">Елена Смирнова</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="field__label">Статус</span>
+        <select class="field__input select" id="af-status">
+          <option value="">Все статусы</option>
+          <option value="ok">Подтверждена</option>
+          <option value="cancelled">Отменена</option>
+        </select>
+      </label>
+    </div>
+    <div class="admin-list" id="aa-list">
+      <div class="admin-row" data-day="ср" data-master="anna" data-status="ok" data-dur="90">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Ирина Петрова</div>
+          <div class="admin-row__meta">Маникюр с покрытием гель-лаком · Анна Ковалева</div>
+          <div class="admin-row__meta aa-when">ср, 10:00</div>
+        </div>
+        <div class="admin-row__side">
+          <span class="badge badge--ok">Подтверждена</span>
+          <button class="btn btn--secondary btn--sm" type="button" data-amove>Перенести</button>
+          <button class="btn btn--text" type="button" data-acancel>Отменить</button>
+        </div>
+      </div>
+      <div class="admin-row" data-day="пт" data-master="marina" data-status="ok" data-dur="60">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Ольга Смирнова</div>
+          <div class="admin-row__meta">Ламинирование бровей · Марина Орлова</div>
+          <div class="admin-row__meta aa-when">пт, 11:00</div>
+        </div>
+        <div class="admin-row__side">
+          <span class="badge badge--ok">Подтверждена</span>
+          <button class="btn btn--secondary btn--sm" type="button" data-amove>Перенести</button>
+          <button class="btn btn--text" type="button" data-acancel>Отменить</button>
+        </div>
+      </div>
+      <div class="admin-row" data-day="чт" data-master="elena" data-status="ok" data-dur="150">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Мария Иванова</div>
+          <div class="admin-row__meta">Наращивание ногтей · Елена Смирнова</div>
+          <div class="admin-row__meta aa-when">чт, 15:00</div>
+        </div>
+        <div class="admin-row__side">
+          <span class="badge badge--ok">Подтверждена</span>
+          <button class="btn btn--secondary btn--sm" type="button" data-amove>Перенести</button>
+          <button class="btn btn--text" type="button" data-acancel>Отменить</button>
+        </div>
+      </div>
+      <div class="admin-row" data-day="пт" data-master="elena" data-status="cancelled" data-dur="60">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Ирина Петрова</div>
+          <div class="admin-row__meta">Ламинирование бровей · Елена Смирнова</div>
+          <div class="admin-row__meta aa-when">пт, 14:00</div>
+        </div>
+        <div class="admin-row__side">
+          <span class="badge badge--cancelled">Отменена</span>
+          <button class="btn btn--secondary btn--sm" type="button" disabled>Перенести</button>
+          <button class="btn btn--text" type="button" disabled style="background:none">Отменить</button>
+        </div>
+      </div>
+    </div>
+    <div class="state-box" id="aa-empty" hidden style="margin-top:var(--sp-4); padding:var(--sp-6)">
+      <p class="state-box__title" style="font-size:1.15rem">Записей не найдено</p>
+      <p class="small muted">Попробуйте изменить фильтры</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #admin-services — админка: услуги
+     ============================================================ -->
+<section class="screen" id="admin-services">
+  <header class="booking-head">
+    <div class="booking-head__in">
+      <a class="logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <div class="site-header__nav">
+        <a class="site-header__link site-header__link--admin site-header__link--hide-m" href="#admin-appointments">Админ-панель</a>
+        <a class="site-header__link site-header__link--hide-m" href="#home">Выйти</a>
+        <span class="user-chip"><span class="avatar">АЗ</span>Алла</span>
+      </div>
+    </div>
+  </header>
+  <div class="booking-narrow" style="padding-top:var(--sp-5); padding-bottom:var(--sp-8)">
+    <nav class="tabs" style="margin-bottom:var(--sp-6)">
+      <a href="#admin-appointments">Записи</a>
+      <a href="#admin-services" class="is-current">Услуги</a>
+      <a href="#admin-masters">Мастера</a>
+      <a href="#admin-blocks">Блокировки</a>
+    </nav>
+    <div class="page-head">
+      <div>
+        <h2 class="booking-title">Услуги</h2>
+        <p class="booking-sub">Название, длительность, цена и доступность при записи.</p>
+      </div>
+      <button class="btn btn--primary" type="button" data-service-add>Добавить услугу</button>
+    </div>
+    <div class="admin-list">
+      <div class="admin-row">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Маникюр с покрытием гель-лаком</div>
+          <div class="admin-row__meta">90 мин · 1 800 ₽</div>
+        </div>
+        <div class="admin-row__side">
+          <span class="badge badge--ok">Активна</span>
+          <label class="switch"><input type="checkbox" checked data-status-switch><span class="switch__track"></span></label>
+          <button class="btn btn--secondary btn--sm" type="button" data-service-edit>Редактировать</button>
+        </div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Маникюр и педикюр</div>
+          <div class="admin-row__meta">150 мин · 3 200 ₽</div>
+        </div>
+        <div class="admin-row__side">
+          <span class="badge badge--ok">Активна</span>
+          <label class="switch"><input type="checkbox" checked data-status-switch><span class="switch__track"></span></label>
+          <button class="btn btn--secondary btn--sm" type="button" data-service-edit>Редактировать</button>
+        </div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Наращивание ногтей</div>
+          <div class="admin-row__meta">150 мин · 2 800 ₽</div>
+        </div>
+        <div class="admin-row__side">
+          <span class="badge badge--ok">Активна</span>
+          <label class="switch"><input type="checkbox" checked data-status-switch><span class="switch__track"></span></label>
+          <button class="btn btn--secondary btn--sm" type="button" data-service-edit>Редактировать</button>
+        </div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Коррекция и окрашивание бровей</div>
+          <div class="admin-row__meta">40 мин · 1 200 ₽</div>
+        </div>
+        <div class="admin-row__side">
+          <span class="badge badge--ok">Активна</span>
+          <label class="switch"><input type="checkbox" checked data-status-switch><span class="switch__track"></span></label>
+          <button class="btn btn--secondary btn--sm" type="button" data-service-edit>Редактировать</button>
+        </div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Ламинирование бровей</div>
+          <div class="admin-row__meta">60 мин · 1 800 ₽</div>
+        </div>
+        <div class="admin-row__side">
+          <span class="badge badge--ok">Активна</span>
+          <label class="switch"><input type="checkbox" checked data-status-switch><span class="switch__track"></span></label>
+          <button class="btn btn--secondary btn--sm" type="button" data-service-edit>Редактировать</button>
+        </div>
+      </div>
+    </div>
+    <p class="booking-card__note" style="margin-top:var(--sp-5)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      Отключённая услуга не показывается при новой записи, но сохраняется в старых записях
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #admin-masters — админка: мастера
+     ============================================================ -->
+<section class="screen" id="admin-masters">
+  <header class="booking-head">
+    <div class="booking-head__in">
+      <a class="logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <div class="site-header__nav">
+        <a class="site-header__link site-header__link--admin site-header__link--hide-m" href="#admin-appointments">Админ-панель</a>
+        <a class="site-header__link site-header__link--hide-m" href="#home">Выйти</a>
+        <span class="user-chip"><span class="avatar">АЗ</span>Алла</span>
+      </div>
+    </div>
+  </header>
+  <div class="booking-narrow" style="padding-top:var(--sp-5); padding-bottom:var(--sp-8)">
+    <nav class="tabs" style="margin-bottom:var(--sp-6)">
+      <a href="#admin-appointments">Записи</a>
+      <a href="#admin-services">Услуги</a>
+      <a href="#admin-masters" class="is-current">Мастера</a>
+      <a href="#admin-blocks">Блокировки</a>
+    </nav>
+    <div class="page-head">
+      <div>
+        <h2 class="booking-title">Мастера</h2>
+        <p class="booking-sub">Команда, услуги каждого мастера и график работы.</p>
+      </div>
+      <button class="btn btn--primary" type="button" data-master-add>Добавить мастера</button>
+    </div>
+    <div class="admin-list">
+      <div class="admin-row">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Анна Ковалева</div>
+          <div class="admin-row__meta">Маникюр, маникюр и педикюр, наращивание, дизайн ногтей</div>
+          <div class="admin-row__meta">вт–пт · 10:00–18:00</div>
+        </div>
+        <div class="admin-row__side">
+          <span class="badge badge--ok">Активна</span>
+          <label class="switch"><input type="checkbox" checked data-status-switch><span class="switch__track"></span></label>
+          <button class="btn btn--secondary btn--sm" type="button" data-master-edit>Редактировать</button>
+        </div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Марина Орлова</div>
+          <div class="admin-row__meta">Коррекция и окрашивание бровей, ламинирование бровей</div>
+          <div class="admin-row__meta">ср–сб · 11:00–20:00</div>
+        </div>
+        <div class="admin-row__side">
+          <span class="badge badge--ok">Активна</span>
+          <label class="switch"><input type="checkbox" checked data-status-switch><span class="switch__track"></span></label>
+          <button class="btn btn--secondary btn--sm" type="button" data-master-edit>Редактировать</button>
+        </div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Елена Смирнова</div>
+          <div class="admin-row__meta">Маникюр с покрытием, наращивание, обе бровные услуги</div>
+          <div class="admin-row__meta">вт, чт, сб · 10:00–19:00</div>
+        </div>
+        <div class="admin-row__side">
+          <span class="badge badge--ok">Активна</span>
+          <label class="switch"><input type="checkbox" checked data-status-switch><span class="switch__track"></span></label>
+          <button class="btn btn--secondary btn--sm" type="button" data-master-edit>Редактировать</button>
+        </div>
+      </div>
+    </div>
+    <p class="booking-card__note" style="margin-top:var(--sp-5)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      Отключённый мастер не показывается при новой записи, но сохраняется в старых записях
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================
+     ЭКРАН #admin-blocks — админка: блокировки времени
+     ============================================================ -->
+<section class="screen" id="admin-blocks">
+  <header class="booking-head">
+    <div class="booking-head__in">
+      <a class="logo" href="#home">
+        <span class="logo__mark">АЗ</span>
+        <span class="logo__text">Алла Зверобоева<small>студия маникюра и бровей</small></span>
+      </a>
+      <div class="site-header__nav">
+        <a class="site-header__link site-header__link--admin site-header__link--hide-m" href="#admin-appointments">Админ-панель</a>
+        <a class="site-header__link site-header__link--hide-m" href="#home">Выйти</a>
+        <span class="user-chip"><span class="avatar">АЗ</span>Алла</span>
+      </div>
+    </div>
+  </header>
+  <div class="booking-narrow" style="padding-top:var(--sp-5); padding-bottom:var(--sp-8)">
+    <nav class="tabs" style="margin-bottom:var(--sp-6)">
+      <a href="#admin-appointments">Записи</a>
+      <a href="#admin-services">Услуги</a>
+      <a href="#admin-masters">Мастера</a>
+      <a href="#admin-blocks" class="is-current">Блокировки</a>
+    </nav>
+    <div class="page-head">
+      <div>
+        <h2 class="booking-title">Блокировки времени</h2>
+        <p class="booking-sub">Обеды, личное время и выходные — в это время запись к мастеру недоступна.</p>
+      </div>
+    </div>
+    <div class="admin-list" id="bl-list" style="margin-bottom:var(--sp-6)">
+      <div class="admin-row">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Анна Ковалева</div>
+          <div class="admin-row__meta">чт · 13:00–14:00 · обед</div>
+        </div>
+        <div class="admin-row__side">
+          <button class="btn btn--text" type="button" data-block-del>Удалить</button>
+        </div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Марина Орлова</div>
+          <div class="admin-row__meta">пт · 15:00–17:00 · личное время</div>
+        </div>
+        <div class="admin-row__side">
+          <button class="btn btn--text" type="button" data-block-del>Удалить</button>
+        </div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-row__main">
+          <div class="admin-row__title">Елена Смирнова</div>
+          <div class="admin-row__meta">сб · весь день · выходной</div>
+        </div>
+        <div class="admin-row__side">
+          <button class="btn btn--text" type="button" data-block-del>Удалить</button>
+        </div>
+      </div>
+    </div>
+    <div class="admin-row" style="align-items:flex-start">
+      <div class="admin-row__main" style="min-width:min(100%, 280px)">
+        <div class="admin-row__title" style="margin-bottom:var(--sp-4)">Добавить блокировку</div>
+        <div class="modal__form" style="margin-top:0">
+          <label class="field">
+            <span class="field__label">Мастер</span>
+            <select class="field__input select" id="bl-master">
+              <option>Анна Ковалева</option>
+              <option>Марина Орлова</option>
+              <option>Елена Смирнова</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="field__label">День недели</span>
+            <select class="field__input select" id="bl-day">
+              <option value="пн">пн</option>
+              <option value="вт">вт</option>
+              <option value="ср">ср</option>
+              <option value="чт" selected>чт</option>
+              <option value="пт">пт</option>
+              <option value="сб">сб</option>
+              <option value="вс">вс</option>
+            </select>
+          </label>
+          <div class="field">
+            <span class="field__label">Время</span>
+            <div class="sched__times">
+              <input class="field__input" type="text" id="bl-from" value="13:00">
+              <span>–</span>
+              <input class="field__input" type="text" id="bl-to" value="14:00">
+            </div>
+            <label class="check" style="margin-top:var(--sp-3)">
+              <input type="checkbox" id="bl-allday">
+              <span class="check__box"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span>
+              <span>Весь день</span>
+            </label>
+          </div>
+          <label class="field">
+            <span class="field__label">Причина</span>
+            <input class="field__input" type="text" id="bl-reason" placeholder="Например: обед" value="обед">
+          </label>
+          <div>
+            <button class="btn btn--primary" type="button" id="bl-add">Добавить блокировку</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- Модальное окно (демо) -->
+<div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <p class="modal__title" id="modal-title">Отменить запись?</p>
+    <p class="modal__text">Маникюр с покрытием гель-лаком, четверг 14:00, мастер Анна Ковалева. Место освободится для других гостей.</p>
+    <div class="modal__actions">
+      <button class="btn btn--secondary" data-close-modal>Оставить</button>
+      <button class="btn btn--primary" data-close-modal data-confirm>Отменить запись</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно: отмена записи клиентом -->
+<div class="modal-overlay" id="modal-cancel" role="dialog" aria-modal="true">
+  <div class="modal">
+    <p class="modal__title">Отменить запись?</p>
+    <p class="modal__text">Маникюр с покрытием гель-лаком, среда 10:00–11:30, мастер Анна Ковалева. Место освободится для других гостей.</p>
+    <div class="modal__actions">
+      <button class="btn btn--secondary" type="button" data-close>Не отменять</button>
+      <button class="btn btn--primary" type="button" id="cab-cancel-yes">Да, отменить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно: отмена записи администратором -->
+<div class="modal-overlay" id="modal-admin-cancel" role="dialog" aria-modal="true">
+  <div class="modal">
+    <p class="modal__title">Отменить запись?</p>
+    <p class="modal__text" id="aa-cancel-text">Запись будет отменена, место освободится для других гостей.</p>
+    <div class="modal__actions">
+      <button class="btn btn--secondary" type="button" data-close>Не отменять</button>
+      <button class="btn btn--primary" type="button" id="aa-cancel-yes">Да, отменить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно: перенос записи администратором -->
+<div class="modal-overlay" id="modal-admin-move" role="dialog" aria-modal="true">
+  <div class="modal modal--wide">
+    <p class="modal__title">Перенести запись</p>
+    <p class="modal__text" id="am-sub">Выберите новые дату и время — показаны только свободные слоты мастера.</p>
+    <div class="date-strip" id="am-dates"></div>
+    <p class="tz-note" style="margin-top:var(--sp-2)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 3"/></svg>
+      Время московское
+    </p>
+    <div class="slots" id="am-slots" style="margin-top:var(--sp-4)"></div>
+    <div class="modal__actions">
+      <button class="btn btn--secondary" type="button" data-close>Отмена</button>
+      <button class="btn btn--primary btn--disabled" type="button" id="am-confirm">Перенести</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно: форма услуги -->
+<div class="modal-overlay" id="modal-service" role="dialog" aria-modal="true">
+  <div class="modal">
+    <p class="modal__title" id="ms-title">Добавить услугу</p>
+    <div class="modal__form">
+      <label class="field">
+        <span class="field__label">Название</span>
+        <input class="field__input" type="text" id="ms-name" placeholder="Например: Маникюр с покрытием гель-лаком">
+      </label>
+      <label class="field">
+        <span class="field__label">Длительность, минут</span>
+        <input class="field__input" type="text" id="ms-min" placeholder="90">
+      </label>
+      <label class="field">
+        <span class="field__label">Цена, ₽</span>
+        <input class="field__input" type="text" id="ms-price" placeholder="1800">
+      </label>
+    </div>
+    <div class="modal__actions">
+      <button class="btn btn--secondary" type="button" data-close>Отмена</button>
+      <button class="btn btn--primary" type="button" data-close data-toast="Услуга сохранена">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно: форма мастера -->
+<div class="modal-overlay" id="modal-master" role="dialog" aria-modal="true">
+  <div class="modal modal--wide">
+    <p class="modal__title" id="mm-title">Добавить мастера</p>
+    <div class="modal__form">
+      <label class="field">
+        <span class="field__label">Имя</span>
+        <input class="field__input" type="text" id="mm-name" placeholder="Имя и фамилия">
+      </label>
+      <div class="field">
+        <span class="field__label">Услуги мастера</span>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:2px">
+          <label class="check"><input type="checkbox" checked><span class="check__box"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span><span>Маникюр с покрытием гель-лаком</span></label>
+          <label class="check"><input type="checkbox"><span class="check__box"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span><span>Маникюр и педикюр</span></label>
+          <label class="check"><input type="checkbox"><span class="check__box"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span><span>Наращивание ногтей</span></label>
+          <label class="check"><input type="checkbox"><span class="check__box"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span><span>Коррекция и окрашивание бровей</span></label>
+          <label class="check"><input type="checkbox"><span class="check__box"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span><span>Ламинирование бровей</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <span class="field__label">График по дням недели</span>
+        <div class="sched" id="mm-sched"></div>
+      </div>
+    </div>
+    <div class="modal__actions">
+      <button class="btn btn--secondary" type="button" data-close>Отмена</button>
+      <button class="btn btn--primary" type="button" data-close data-toast="Мастер сохранён">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Всплывающее сообщение (демо) -->
+<div class="toast" id="toast">
+  <span class="toast__dot"></span>
+  <span>Запись подтверждена. Ждём вас!</span>
+</div>
+
+<script>
+/* ---------- Роутер экранов по хэшу ---------- */
+(function(){
+  var screens = document.querySelectorAll('.screen');
+  var links = document.querySelectorAll('[data-proto-link]');
+  function route(){
+    var h = (location.hash || '#home').slice(1);
+    var target = document.getElementById(h);
+    if(!target || !target.classList.contains('screen')){
+      target = document.getElementById('home');
+    }
+    screens.forEach(function(s){ s.classList.toggle('is-active', s === target); });
+    links.forEach(function(a){
+      a.classList.toggle('is-current', a.getAttribute('data-proto-link') === target.id);
+    });
+    window.scrollTo(0,0);
+  }
+  window.addEventListener('hashchange', route);
+  route();
+})();
+
+/* ---------- Выбор карточек / слотов (демо-состояния) ---------- */
+document.addEventListener('click', function(e){
+  var sel = e.target.closest('[data-selectable]');
+  if(sel){
+    var group = sel.parentElement.querySelectorAll('[data-selectable]');
+    group.forEach(function(el){ el.classList.remove('is-selected'); });
+    sel.classList.add('is-selected');
+    return;
+  }
+  var slot = e.target.closest('.slot:not(.slot--skeleton)');
+  if(slot && slot.parentElement.classList.contains('slots')){
+    slot.parentElement.querySelectorAll('.slot').forEach(function(el){ el.classList.remove('is-selected'); });
+    slot.classList.add('is-selected');
+  }
+});
+
+/* ---------- Доп. опция: подсчёт цены дизайна ---------- */
+(function(){
+  var picker = document.querySelector('[data-nail-picker]');
+  if(!picker) return;
+  var total = document.querySelector('[data-nail-total]');
+  picker.addEventListener('click', function(e){
+    var chip = e.target.closest('.chip');
+    if(!chip) return;
+    picker.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('is-selected'); });
+    chip.classList.add('is-selected');
+    var price = (parseInt(chip.getAttribute('data-nails'), 10) / 2) * 300;
+    total.textContent = price.toLocaleString('ru-RU') + ' ₽';
+  });
+})();
+
+/* ---------- Лента дат: 30 дней вперёд, выходные вс/пн ---------- */
+(function(){
+  var strip = document.querySelector('[data-date-strip]');
+  if(!strip) return;
+  var WD = ['вс','пн','вт','ср','чт','пт','сб'];
+  var MN = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  var today = new Date();
+  var firstEnabled = null;
+  for(var i = 0; i < 30; i++){
+    var d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+    var off = (d.getDay() === 0 || d.getDay() === 1); // студия работает вт–сб
+    var cell = document.createElement('button');
+    cell.className = 'date-cell';
+    cell.type = 'button';
+    cell.disabled = off;
+    cell.innerHTML =
+      '<span class="date-cell__wd">' + WD[d.getDay()] + '</span>' +
+      '<span class="date-cell__d">' + d.getDate() + '</span>' +
+      '<span class="date-cell__m">' + MN[d.getMonth()] + '</span>';
+    if(!off && !firstEnabled){ firstEnabled = cell; }
+    strip.appendChild(cell);
+  }
+  strip.addEventListener('click', function(e){
+    var c = e.target.closest('.date-cell');
+    if(!c || c.disabled) return;
+    strip.querySelectorAll('.date-cell').forEach(function(el){ el.classList.remove('is-selected'); });
+    c.classList.add('is-selected');
+  });
+  if(firstEnabled){ firstEnabled.classList.add('is-selected'); }
+})();
+
+/* ---------- Демо-слоты времени (только свободные) ---------- */
+(function(){
+  var box = document.querySelector('[data-slots]');
+  if(!box) return;
+  ['10:00','11:30','13:00','14:30','16:00','17:30','19:00'].forEach(function(t, i){
+    var b = document.createElement('button');
+    b.className = 'slot' + (i === 2 ? ' is-selected' : '');
+    b.type = 'button';
+    b.textContent = t;
+    box.appendChild(b);
+  });
+})();
+
+/* ---------- Модальное окно ---------- */
+(function(){
+  var overlay = document.getElementById('modal');
+  var lastFocus = null;
+  function open(){ lastFocus = document.activeElement; overlay.classList.add('is-open'); }
+  function close(){ overlay.classList.remove('is-open'); if(lastFocus) lastFocus.focus(); }
+  document.querySelectorAll('[data-open-modal]').forEach(function(b){ b.addEventListener('click', open); });
+  document.querySelectorAll('[data-close-modal]').forEach(function(b){
+    b.addEventListener('click', function(){
+      close();
+      if(b.hasAttribute('data-confirm')) showToast('Запись отменена');
+    });
+  });
+  overlay.addEventListener('click', function(e){ if(e.target === overlay) close(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+})();
+
+/* ---------- Тост ---------- */
+var toastTimer = null;
+function showToast(text){
+  var toast = document.getElementById('toast');
+  if(text) toast.querySelector('span:last-child').textContent = text;
+  toast.classList.add('is-visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ toast.classList.remove('is-visible'); }, 2600);
+}
+document.querySelectorAll('[data-show-toast]').forEach(function(b){
+  b.addEventListener('click', function(){ showToast('Запись подтверждена. Ждём вас!'); });
+});
+</script>
+
+<script>
+/* ============================================================
+   ВТОРАЯ ИТЕРАЦИЯ: авторизация (демо) и воронка записи
+   Только тестовые данные, без сервера и реальной логики.
+   ============================================================ */
+(function(){
+
+  /* ---------- Тестовые данные ---------- */
+  var SERVICES = {
+    manicure:   { name:'Маникюр с покрытием гель-лаком', price:1800, min:90,  nail:true,  masters:['anna','elena'] },
+    mani_pedi:  { name:'Маникюр и педикюр',              price:3200, min:150, nail:true,  masters:['anna'] },
+    extension:  { name:'Наращивание ногтей',             price:2800, min:150, nail:true,  masters:['anna','elena'] },
+    brows_corr: { name:'Коррекция и окрашивание бровей', price:1200, min:40,  nail:false, masters:['marina','elena'] },
+    brows_lam:  { name:'Ламинирование бровей',           price:1800, min:60,  nail:false, masters:['marina','elena'] }
+  };
+  var MASTERS = {
+    anna:   { name:'Анна Ковалева',  role:'Мастер маникюра и педикюра',          ini:'АК', days:[2,3,4,5], start:600, end:1080, sched:'вт–пт · 10:00–18:00' },
+    marina: { name:'Марина Орлова',  role:'Мастер по бровям',                    ini:'МО', days:[3,4,5,6], start:660, end:1200, sched:'ср–сб · 11:00–20:00' },
+    elena:  { name:'Елена Смирнова', role:'Универсальный мастер · ногти и брови', ini:'ЕС', days:[2,4,6],  start:600, end:1140, sched:'вт, чт, сб · 10:00–19:00', satOff:true }
+  };
+  var WD_S = ['вс','пн','вт','ср','чт','пт','сб'];
+  var WD_F = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+  var MN_S = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  var MN_G = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  var STEP_DEFS = [
+    { id:'booking-service', label:'Услуга' },
+    { id:'booking-master',  label:'Мастер' },
+    { id:'booking-time',    label:'Время' },
+    { id:'booking-confirm', label:'Подтверждение' }
+  ];
+
+  /* ---------- Состояние записи (в памяти, без сервера) ---------- */
+  var bk = { service:null, nails:null, master:null, date:null, slot:null };
+
+  function svc(){ return bk.service ? SERVICES[bk.service] : SERVICES.manicure; }
+  function mst(){ return bk.master ? MASTERS[bk.master] : MASTERS.anna; }
+  function designPrice(){ return bk.nails ? (bk.nails/2)*300 : 0; }
+  function designMin(){ return !bk.nails ? 0 : (bk.nails <= 4 ? 15 : 30); }
+  function totalPrice(){ return svc().price + designPrice(); }
+  function totalMin(){ return svc().min + designMin(); }
+  function fmtPrice(n){ return n.toLocaleString('ru-RU') + ' ₽'; }
+  function fmtMin(m){
+    var h = Math.floor(m/60), mm = m%60;
+    if(h && mm) return h + ' ч ' + mm + ' мин';
+    if(h) return h + ' ч';
+    return mm + ' мин';
+  }
+  function fmtTime(m){
+    var h = Math.floor(m/60), mm = m%60;
+    return (h<10?'0':'')+h + ':' + (mm<10?'0':'')+mm;
+  }
+  function fmtWhen(){
+    var d = bk.date;
+    if(!d){
+      d = new Date(); /* демо: ближайшая среда */
+      while(d.getDay() !== 3) d.setDate(d.getDate()+1);
+    }
+    return WD_F[d.getDay()] + ', ' + d.getDate() + ' ' + MN_G[d.getMonth()] + ' · ' + (bk.slot || '13:00');
+  }
+  function serviceLine(){
+    return svc().name + (bk.nails ? ' + дизайн, ' + bk.nails + ' ногт.' : '');
+  }
+
+  /* ---------- Индикатор шагов ---------- */
+  document.querySelectorAll('[data-steps]').forEach(function(host){
+    var cur = parseInt(host.getAttribute('data-steps'), 10);
+    host.innerHTML = '';
+    STEP_DEFS.forEach(function(s, i){
+      var n = i + 1, el;
+      if(n < cur){
+        el = document.createElement('a');
+        el.href = '#' + s.id;
+        el.className = 'step is-done';
+        el.innerHTML = '<span class="step__dot">✓</span><span class="step__label">' + s.label + '</span>';
+      } else {
+        el = document.createElement('div');
+        el.className = 'step' + (n === cur ? ' is-current' : '');
+        el.innerHTML = '<span class="step__dot">' + n + '</span><span class="step__label">' + s.label + '</span>';
+      }
+      host.appendChild(el);
+    });
+  });
+
+  /* ---------- Нижняя панель итога ---------- */
+  function updateBars(){
+    var name  = bk.service ? serviceLine() : 'Услуга не выбрана';
+    var meta  = bk.service ? fmtMin(totalMin()) : '—';
+    var price = bk.service ? fmtPrice(totalPrice()) : '—';
+    document.querySelectorAll('[data-bk-name]').forEach(function(e){ e.textContent = name; });
+    document.querySelectorAll('[data-bk-meta]').forEach(function(e){ e.textContent = meta; });
+    document.querySelectorAll('[data-bk-price]').forEach(function(e){ e.textContent = price; });
+    toggleNext('bk-next-1', !!bk.service);
+    toggleNext('bk-next-2', !!bk.master);
+    toggleNext('bk-next-3', !!bk.slot);
+  }
+  function toggleNext(id, on){
+    var b = document.getElementById(id);
+    if(b) b.classList.toggle('btn--disabled', !on);
+  }
+  document.addEventListener('click', function(e){
+    var a = e.target.closest('.booking-bar a.btn');
+    if(a && a.classList.contains('btn--disabled')) e.preventDefault();
+  });
+
+  /* ---------- Шаг 1: услуга + доп. опция ---------- */
+  var designCard = document.getElementById('bk-design');
+  var servicesBox = document.getElementById('bk-services');
+  if(servicesBox){
+    servicesBox.addEventListener('click', function(e){
+      var card = e.target.closest('[data-service]');
+      if(!card) return;
+      bk.service = card.getAttribute('data-service');
+      bk.master = null; bk.date = null; bk.slot = null;
+      if(SERVICES[bk.service].nail){
+        designCard.hidden = false;
+      } else {
+        designCard.hidden = true;
+        bk.nails = null;
+        designCard.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('is-selected'); });
+      }
+      updateBars();
+    });
+  }
+  var nailsBox = document.getElementById('bk-nails');
+  if(nailsBox){
+    nailsBox.addEventListener('click', function(e){
+      var chip = e.target.closest('.chip');
+      if(!chip) return;
+      var n = parseInt(chip.getAttribute('data-n'), 10);
+      if(bk.nails === n){ /* повторный клик — убрать опцию */
+        bk.nails = null;
+        chip.classList.remove('is-selected');
+        designCard.classList.remove('is-selected');
+      } else {
+        bk.nails = n;
+        nailsBox.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('is-selected'); });
+        chip.classList.add('is-selected');
+        designCard.classList.add('is-selected');
+      }
+      bk.master = null; bk.date = null; bk.slot = null;
+      updateBars();
+    });
+  }
+
+  /* ---------- Шаг 2: мастера ---------- */
+  var mastersBox = document.getElementById('bk-masters');
+  function availableMasters(){
+    if(bk.nails) return ['anna']; /* дизайн ногтей — только Анна Ковалева */
+    return svc().masters;
+  }
+  function renderMasters(){
+    if(!mastersBox) return;
+    var ids = availableMasters();
+    mastersBox.innerHTML = '';
+    ids.forEach(function(id){
+      var m = MASTERS[id];
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'master-card' + (bk.master === id ? ' is-selected' : '');
+      b.setAttribute('data-master', id);
+      b.setAttribute('data-selectable', '');
+      b.innerHTML =
+        '<span class="avatar">' + m.ini + '</span>' +
+        '<span class="master-card__body">' +
+          '<span class="master-card__name" style="display:block">' + m.name + '</span>' +
+          '<span class="master-card__role" style="display:block">' + m.role + '</span>' +
+          '<span class="master-card__sched" style="display:block">' + m.sched + '</span>' +
+        '</span>' +
+        '<span class="radio-dot"></span>';
+      mastersBox.appendChild(b);
+    });
+    if(ids.length === 1){ bk.master = ids[0]; mastersBox.firstChild.classList.add('is-selected'); }
+    var sub = document.getElementById('bk-master-sub');
+    if(sub){
+      sub.textContent = bk.nails
+        ? 'Опция «Дизайн ногтей» выполняется только Анной Ковалевой.'
+        : 'Показаны только мастера, которые выполняют выбранную услугу.';
+    }
+    updateBars();
+  }
+  if(mastersBox){
+    mastersBox.addEventListener('click', function(e){
+      var card = e.target.closest('[data-master]');
+      if(!card) return;
+      bk.master = card.getAttribute('data-master');
+      bk.date = null; bk.slot = null;
+      updateBars();
+    });
+  }
+
+  /* ---------- Шаг 3: даты и слоты ---------- */
+  var datesBox = document.getElementById('bk-dates');
+  var slotsBox = document.getElementById('bk-slots');
+  var slotsLoading = document.getElementById('bk-slots-loading');
+  var slotsEmpty = document.getElementById('bk-slots-empty');
+  var slotsHint = document.getElementById('bk-slots-hint');
+  var slotTimer = null;
+
+  function masterWorksOn(masterId, day){
+    var m = MASTERS[masterId];
+    if(m.days.indexOf(day) === -1) return false;
+    if(m.satOff && day === 6) return false; /* демо: суббота у Елены — выходной */
+    return true;
+  }
+  function renderDates(){
+    if(!datesBox) return;
+    datesBox.innerHTML = '';
+    var masterId = bk.master || 'anna';
+    var today = new Date();
+    var first = null, toSelect = null;
+    for(var i = 0; i < 30; i++){
+      var d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+      var off = !masterWorksOn(masterId, d.getDay());
+      var cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'date-cell';
+      cell.disabled = off;
+      cell.setAttribute('data-ts', d.getTime());
+      cell.innerHTML =
+        '<span class="date-cell__wd">' + WD_S[d.getDay()] + '</span>' +
+        '<span class="date-cell__d">' + d.getDate() + '</span>' +
+        '<span class="date-cell__m">' + MN_S[d.getMonth()] + '</span>';
+      if(!off && !first) first = cell;
+      if(bk.date && d.toDateString() === bk.date.toDateString()) toSelect = cell;
+      datesBox.appendChild(cell);
+    }
+    var pick = toSelect || first;
+    if(pick) pick.classList.add('is-selected');
+    var sub = document.getElementById('bk-time-sub');
+    if(sub) sub.textContent = 'Мастер: ' + mst().name + '. Лента на 30 дней вперёд — активны только её рабочие дни.';
+    var selDate = bk.date;
+    if(!selDate && pick){
+      selDate = new Date(parseInt(pick.getAttribute('data-ts'), 10));
+      bk.date = selDate;
+    }
+    if(selDate) loadSlots();
+  }
+  if(datesBox){
+    datesBox.addEventListener('click', function(e){
+      var c = e.target.closest('.date-cell');
+      if(!c || c.disabled) return;
+      datesBox.querySelectorAll('.date-cell').forEach(function(el){ el.classList.remove('is-selected'); });
+      c.classList.add('is-selected');
+      bk.date = new Date(parseInt(c.getAttribute('data-ts'), 10));
+      bk.slot = null;
+      updateBars();
+      loadSlots();
+    });
+  }
+
+  /* Демо-занятость: у Анны по средам 10:00 уже занято (окно 10:00–11:30);
+     у Марины по субботам — демо «всё занято» для пустого состояния. */
+  function busyWindows(){
+    var m = bk.master || 'anna';
+    var day = bk.date ? bk.date.getDay() : -1;
+    if(m === 'anna' && day === 3) return [[600, 690]];
+    if(m === 'marina' && day === 6) return [[660, 1200]];
+    return [];
+  }
+  function computeSlots(){
+    var master = mst();
+    var dur = totalMin();
+    var busy = busyWindows();
+    var out = [];
+    for(var t = master.start; t + dur <= master.end; t += 30){
+      var ok = true;
+      for(var i = 0; i < busy.length; i++){
+        if(t < busy[i][1] && t + dur > busy[i][0]){ ok = false; break; }
+      }
+      if(ok) out.push(t);
+    }
+    return out;
+  }
+  function loadSlots(){
+    if(!slotsBox) return;
+    slotsBox.hidden = true;
+    slotsEmpty.hidden = true;
+    slotsHint.hidden = true;
+    slotsLoading.hidden = false;
+    clearTimeout(slotTimer);
+    slotTimer = setTimeout(function(){
+      slotsLoading.hidden = true;
+      var list = computeSlots();
+      if(!list.length){
+        slotsEmpty.hidden = false;
+        return;
+      }
+      slotsBox.innerHTML = '';
+      list.forEach(function(t){
+        var label = fmtTime(t);
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'slot' + (bk.slot === label ? ' is-selected' : '');
+        b.textContent = label;
+        slotsBox.appendChild(b);
+      });
+      slotsBox.hidden = false;
+    }, 450);
+  }
+  if(slotsBox){
+    slotsBox.addEventListener('click', function(e){
+      var s = e.target.closest('.slot');
+      if(!s || s.classList.contains('slot--skeleton')) return;
+      bk.slot = s.textContent;
+      updateBars();
+    });
+  }
+
+  /* ---------- Шаг 4: подтверждение ---------- */
+  function renderConfirm(){
+    var s = svc();
+    document.getElementById('cf-service').textContent = s.name;
+    var optRow = document.getElementById('cf-option-row');
+    if(bk.nails){
+      optRow.hidden = false;
+      document.getElementById('cf-option').textContent =
+        'Дизайн ногтей · ' + bk.nails + ' ногт. · ' + fmtPrice(designPrice()) + ' · +' + designMin() + ' мин';
+    } else {
+      optRow.hidden = true;
+    }
+    document.getElementById('cf-master').textContent = mst().name;
+    document.getElementById('cf-when').textContent = fmtWhen();
+    document.getElementById('cf-duration').textContent = fmtMin(totalMin());
+    document.getElementById('cf-total').textContent = fmtPrice(totalPrice());
+    var err = document.getElementById('confirm-error');
+    if(err) err.classList.remove('is-visible');
+  }
+
+  /* ---------- Успех ---------- */
+  function renderSuccess(){
+    var el = document.getElementById('bk-success-sum');
+    if(!el) return;
+    el.innerHTML =
+      '<b>' + serviceLine() + '</b><br>' +
+      fmtWhen() + ' · мастер <b>' + mst().name + '</b><br>' +
+      'Длительность ' + fmtMin(totalMin()) + ' · <b>' + fmtPrice(totalPrice()) + '</b>, оплата в салоне';
+  }
+
+  /* ---------- Демо-переключатели ошибок ---------- */
+  document.querySelectorAll('[data-demo-toggle]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var t = document.querySelector(b.getAttribute('data-demo-toggle'));
+      if(t) t.classList.toggle('is-visible');
+    });
+  });
+  var regDemo = document.querySelector('[data-demo-register]');
+  if(regDemo){
+    regDemo.addEventListener('click', function(){
+      var f = document.getElementById('reg-email-field');
+      var msg = document.getElementById('reg-email-error');
+      var on = !f.classList.contains('field--error');
+      f.classList.toggle('field--error', on);
+      msg.hidden = !on;
+    });
+  }
+
+  /* ---------- Рендер при смене экрана ---------- */
+  function currentId(){
+    var h = (location.hash || '#home').slice(1);
+    var t = document.getElementById(h);
+    return (t && t.classList.contains('screen')) ? h : 'home';
+  }
+  function onRoute(){
+    var id = currentId();
+    if(id === 'booking-master') renderMasters();
+    if(id === 'booking-time') renderDates();
+    if(id === 'booking-confirm') renderConfirm();
+    if(id === 'booking-success') renderSuccess();
+    updateBars();
+  }
+  window.addEventListener('hashchange', onRoute);
+  onRoute();
+})();
+</script>
+
+<script>
+/* ============================================================
+   ТРЕТЬЯ ИТЕРАЦИЯ: кабинет, перенос, админ-панель
+   Только вёрстка и тестовые данные, без сервера.
+   ============================================================ */
+(function(){
+
+  /* ---------- Универсальные модальные окна ---------- */
+  document.addEventListener('click', function(e){
+    var opener = e.target.closest('[data-open-modal]');
+    if(opener){
+      var ov = document.querySelector(opener.getAttribute('data-open-modal') || '#modal');
+      if(ov) ov.classList.add('is-open');
+    }
+    var closer = e.target.closest('[data-close]');
+    if(closer){
+      var o = closer.closest('.modal-overlay');
+      if(o) o.classList.remove('is-open');
+      if(closer.getAttribute('data-toast')) showToast(closer.getAttribute('data-toast'));
+    }
+    if(e.target.classList && e.target.classList.contains('modal-overlay')){
+      e.target.classList.remove('is-open');
+    }
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+      document.querySelectorAll('.modal-overlay.is-open').forEach(function(o){ o.classList.remove('is-open'); });
+    }
+  });
+
+  /* ---------- Тост после смены экрана (перенос записи) ---------- */
+  var pendingToast = null;
+  window.addEventListener('hashchange', function(){
+    if(pendingToast){
+      var t = pendingToast; pendingToast = null;
+      setTimeout(function(){ showToast(t); }, 250);
+    }
+    if((location.hash || '').slice(1) === 'reschedule') rsRenderDates();
+  });
+
+  /* ---------- Кабинет: вкладки ---------- */
+  var cabTabs = document.getElementById('cab-tabs');
+  if(cabTabs){
+    cabTabs.addEventListener('click', function(e){
+      var b = e.target.closest('[data-tab]');
+      if(!b) return;
+      cabTabs.querySelectorAll('button').forEach(function(x){ x.classList.remove('is-current'); });
+      b.classList.add('is-current');
+      var up = b.getAttribute('data-tab') === 'upcoming';
+      document.getElementById('cab-upcoming').hidden = !up;
+      document.getElementById('cab-past').hidden = up;
+    });
+  }
+
+  /* ---------- Кабинет: отмена записи ---------- */
+  var cabYes = document.getElementById('cab-cancel-yes');
+  if(cabYes){
+    cabYes.addEventListener('click', function(){
+      document.getElementById('modal-cancel').classList.remove('is-open');
+      var badge = document.getElementById('cab-badge-1');
+      badge.textContent = 'Отменена';
+      badge.className = 'badge badge--cancelled';
+      document.getElementById('cab-actions-1').innerHTML =
+        '<button class="btn btn--secondary btn--sm" type="button" disabled>Перенести</button>' +
+        '<button class="btn btn--text" type="button" disabled style="background:none">Отменить</button>';
+      showToast('Запись отменена');
+    });
+  }
+
+  /* ---------- Перенос записи (клиент): мастер Анна, 90 мин ---------- */
+  var WD_S3 = ['вс','пн','вт','ср','чт','пт','сб'];
+  var MN_S3 = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  var MASTERS3 = {
+    anna:   { days:[2,3,4,5], start:600, end:1080 },
+    marina: { days:[3,4,5,6], start:660, end:1200 },
+    elena:  { days:[2,4,6],  start:600, end:1140, satOff:true }
+  };
+  function fmtT(m){
+    var h = Math.floor(m/60), mm = m%60;
+    return (h<10?'0':'')+h + ':' + (mm<10?'0':'')+mm;
+  }
+  function worksOn3(masterId, day){
+    var m = MASTERS3[masterId];
+    if(m.days.indexOf(day) === -1) return false;
+    if(m.satOff && day === 6) return false;
+    return true;
+  }
+  function busy3(masterId, day){
+    if(masterId === 'anna' && day === 3) return [[600, 690]];   /* демо: среда 10:00 занято */
+    if(masterId === 'marina' && day === 6) return [[660, 1200]]; /* демо пустого состояния */
+    return [];
+  }
+  function slots3(masterId, day, dur){
+    var m = MASTERS3[masterId], busy = busy3(masterId, day), out = [];
+    for(var t = m.start; t + dur <= m.end; t += 30){
+      var ok = true;
+      for(var i = 0; i < busy.length; i++){
+        if(t < busy[i][1] && t + dur > busy[i][0]){ ok = false; break; }
+      }
+      if(ok) out.push(t);
+    }
+    return out;
+  }
+  function buildDates(box, masterId, onPick){
+    box.innerHTML = '';
+    box.__onPick = onPick;
+    var today = new Date(), first = null;
+    for(var i = 0; i < 30; i++){
+      var d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+      var cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'date-cell';
+      cell.disabled = !worksOn3(masterId, d.getDay());
+      cell.setAttribute('data-ts', d.getTime());
+      cell.innerHTML =
+        '<span class="date-cell__wd">' + WD_S3[d.getDay()] + '</span>' +
+        '<span class="date-cell__d">' + d.getDate() + '</span>' +
+        '<span class="date-cell__m">' + MN_S3[d.getMonth()] + '</span>';
+      if(!cell.disabled && !first) first = cell;
+      box.appendChild(cell);
+    }
+    if(!box.__bound){
+      box.__bound = true;
+      box.addEventListener('click', function(e){
+        var c = e.target.closest('.date-cell');
+        if(!c || c.disabled) return;
+        box.querySelectorAll('.date-cell').forEach(function(el){ el.classList.remove('is-selected'); });
+        c.classList.add('is-selected');
+        if(box.__onPick) box.__onPick(new Date(parseInt(c.getAttribute('data-ts'), 10)));
+      });
+    }
+    return first;
+  }
+
+  var rs = { date:null, slot:null };
+  var rsDates = document.getElementById('rs-dates');
+  var rsSlots = document.getElementById('rs-slots');
+  var rsLoading = document.getElementById('rs-loading');
+  var rsEmpty = document.getElementById('rs-empty');
+  var rsHint = document.getElementById('rs-hint');
+  var rsConfirm = document.getElementById('rs-confirm');
+  var rsTimer = null;
+  function rsLoad(){
+    rsSlots.hidden = true; rsEmpty.hidden = true; rsHint.hidden = true;
+    rsLoading.hidden = false;
+    clearTimeout(rsTimer);
+    rsTimer = setTimeout(function(){
+      rsLoading.hidden = true;
+      var list = slots3('anna', rs.date.getDay(), 90);
+      if(!list.length){ rsEmpty.hidden = false; return; }
+      rsSlots.innerHTML = '';
+      list.forEach(function(t){
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'slot' + (rs.slot === fmtT(t) ? ' is-selected' : '');
+        b.textContent = fmtT(t);
+        rsSlots.appendChild(b);
+      });
+      rsSlots.hidden = false;
+    }, 450);
+  }
+  function rsRenderDates(){
+    if(!rsDates) return;
+    var first = buildDates(rsDates, 'anna', function(d){
+      rs.date = d; rs.slot = null;
+      rsConfirm.classList.add('btn--disabled');
+      rsLoad();
+    });
+    if(first && !rs.date){ first.classList.add('is-selected'); rs.date = new Date(parseInt(first.getAttribute('data-ts'), 10)); }
+    if(rs.date) rsLoad();
+  }
+  if(rsSlots){
+    rsSlots.addEventListener('click', function(e){
+      var s = e.target.closest('.slot');
+      if(!s) return;
+      rsSlots.querySelectorAll('.slot').forEach(function(el){ el.classList.remove('is-selected'); });
+      s.classList.add('is-selected');
+      rs.slot = s.textContent;
+      rsConfirm.classList.remove('btn--disabled');
+    });
+  }
+  if(rsConfirm){
+    rsConfirm.addEventListener('click', function(){
+      if(rsConfirm.classList.contains('btn--disabled') || !rs.slot) return;
+      var parts = rs.slot.split(':');
+      var end = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10) + 90;
+      var label = WD_S3[rs.date.getDay()] + ', ' + rs.slot + '–' + fmtT(end);
+      document.getElementById('cab-when-1').textContent = label;
+      document.getElementById('rs-current').textContent = label;
+      pendingToast = 'Запись перенесена';
+      location.hash = '#cabinet';
+    });
+  }
+
+  /* ---------- Админка: фильтры записей ---------- */
+  var afDate = document.getElementById('af-date');
+  function aaFilter(){
+    var d = afDate.value;
+    var m = document.getElementById('af-master').value;
+    var s = document.getElementById('af-status').value;
+    var visible = 0;
+    document.querySelectorAll('#aa-list .admin-row').forEach(function(r){
+      var ok = (!d || r.getAttribute('data-day') === d)
+            && (!m || r.getAttribute('data-master') === m)
+            && (!s || r.getAttribute('data-status') === s);
+      r.hidden = !ok;
+      if(ok) visible++;
+    });
+    document.getElementById('aa-empty').hidden = visible > 0;
+  }
+  if(afDate){
+    ['af-date','af-master','af-status'].forEach(function(id){
+      document.getElementById(id).addEventListener('change', aaFilter);
+    });
+  }
+
+  /* ---------- Админка: отмена записи ---------- */
+  var aaRow = null;
+  var aaYes = document.getElementById('aa-cancel-yes');
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-acancel]');
+    if(b){
+      aaRow = b.closest('.admin-row');
+      var client = aaRow.querySelector('.admin-row__title').textContent;
+      var what = aaRow.querySelectorAll('.admin-row__meta')[0].textContent;
+      var when = aaRow.querySelector('.aa-when').textContent;
+      document.getElementById('aa-cancel-text').textContent =
+        client + ' — ' + what + ', ' + when + '. Место освободится для других гостей.';
+      document.getElementById('modal-admin-cancel').classList.add('is-open');
+    }
+  });
+  if(aaYes){
+    aaYes.addEventListener('click', function(){
+      document.getElementById('modal-admin-cancel').classList.remove('is-open');
+      if(aaRow){
+        aaRow.setAttribute('data-status', 'cancelled');
+        var badge = aaRow.querySelector('.badge');
+        badge.textContent = 'Отменена';
+        badge.className = 'badge badge--cancelled';
+        aaRow.querySelectorAll('.admin-row__side .btn').forEach(function(x){
+          x.disabled = true;
+          if(x.classList.contains('btn--text')) x.style.background = 'none';
+        });
+        aaFilter();
+      }
+      showToast('Запись отменена');
+    });
+  }
+
+  /* ---------- Админка: перенос записи ---------- */
+  var am = { row:null, master:'anna', dur:60, date:null, slot:null };
+  var amDates = document.getElementById('am-dates');
+  var amSlots = document.getElementById('am-slots');
+  var amConfirm = document.getElementById('am-confirm');
+  function amRenderSlots(){
+    amSlots.innerHTML = '';
+    slots3(am.master, am.date.getDay(), am.dur).forEach(function(t){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'slot';
+      b.textContent = fmtT(t);
+      amSlots.appendChild(b);
+    });
+    if(!amSlots.children.length){
+      amSlots.innerHTML = '<p class="small muted">На эту дату свободного времени нет — выберите другой день.</p>';
+    }
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-amove]');
+    if(b){
+      am.row = b.closest('.admin-row');
+      am.master = am.row.getAttribute('data-master');
+      am.dur = parseInt(am.row.getAttribute('data-dur'), 10);
+      am.date = null; am.slot = null;
+      amConfirm.classList.add('btn--disabled');
+      var client = am.row.querySelector('.admin-row__title').textContent;
+      document.getElementById('am-sub').textContent =
+        client + ' · ' + am.row.querySelectorAll('.admin-row__meta')[0].textContent;
+      var first = buildDates(amDates, am.master, function(d){
+        am.date = d; am.slot = null;
+        amConfirm.classList.add('btn--disabled');
+        amRenderSlots();
+      });
+      if(first){ first.classList.add('is-selected'); am.date = new Date(parseInt(first.getAttribute('data-ts'), 10)); amRenderSlots(); }
+      document.getElementById('modal-admin-move').classList.add('is-open');
+      return;
+    }
+    if(e.target.closest('#am-slots .slot')){
+      var s = e.target.closest('#am-slots .slot');
+      amSlots.querySelectorAll('.slot').forEach(function(el){ el.classList.remove('is-selected'); });
+      s.classList.add('is-selected');
+      am.slot = s.textContent;
+      amConfirm.classList.remove('btn--disabled');
+    }
+  });
+  if(amConfirm){
+    amConfirm.addEventListener('click', function(){
+      if(amConfirm.classList.contains('btn--disabled') || !am.slot) return;
+      if(am.row){
+        am.row.querySelector('.aa-when').textContent = WD_S3[am.date.getDay()] + ', ' + am.slot;
+        am.row.setAttribute('data-day', WD_S3[am.date.getDay()]);
+        aaFilter();
+      }
+      document.getElementById('modal-admin-move').classList.remove('is-open');
+      showToast('Запись перенесена');
+    });
+  }
+
+  /* ---------- Админка: переключатели «Активна/Отключена» ---------- */
+  document.addEventListener('change', function(e){
+    var sw = e.target.closest('[data-status-switch]');
+    if(!sw) return;
+    var row = sw.closest('.admin-row');
+    var badge = row.querySelector('.badge');
+    if(sw.checked){
+      badge.textContent = 'Активна';
+      badge.className = 'badge badge--ok';
+      row.classList.remove('is-off');
+    } else {
+      badge.textContent = 'Отключена';
+      badge.className = 'badge badge--cancelled';
+      row.classList.add('is-off');
+    }
+  });
+
+  /* ---------- Админка: форма услуги ---------- */
+  document.addEventListener('click', function(e){
+    var add = e.target.closest('[data-service-add]');
+    var edit = e.target.closest('[data-service-edit]');
+    if(!add && !edit) return;
+    document.getElementById('ms-title').textContent = add ? 'Добавить услугу' : 'Редактировать услугу';
+    if(add){
+      document.getElementById('ms-name').value = '';
+      document.getElementById('ms-min').value = '';
+      document.getElementById('ms-price').value = '';
+    } else {
+      var row = edit.closest('.admin-row');
+      var meta = row.querySelector('.admin-row__meta').textContent;
+      var m = meta.match(/(\d+)\s*мин.*?([\d\s]+)\s*₽/);
+      document.getElementById('ms-name').value = row.querySelector('.admin-row__title').textContent;
+      document.getElementById('ms-min').value = m ? m[1] : '';
+      document.getElementById('ms-price').value = m ? m[2].replace(/\s/g, '') : '';
+    }
+    document.getElementById('modal-service').classList.add('is-open');
+  });
+
+  /* ---------- Админка: форма мастера ---------- */
+  var mmSched = document.getElementById('mm-sched');
+  if(mmSched){
+    [['пн', false], ['вт', true], ['ср', true], ['чт', true], ['пт', true], ['сб', false], ['вс', false]]
+      .forEach(function(cfg){
+        var row = document.createElement('div');
+        row.className = 'sched__row' + (cfg[1] ? '' : ' is-off');
+        row.innerHTML =
+          '<label class="check"><input type="checkbox"' + (cfg[1] ? ' checked' : '') + ' data-sched-day>' +
+          '<span class="check__box"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span>' +
+          '<span>' + cfg[0] + '</span></label>' +
+          '<div class="sched__times">' +
+            '<input class="field__input" type="text" value="10:00"' + (cfg[1] ? '' : ' disabled') + '> – ' +
+            '<input class="field__input" type="text" value="18:00"' + (cfg[1] ? '' : ' disabled') + '>' +
+          '</div>';
+        mmSched.appendChild(row);
+      });
+    mmSched.addEventListener('change', function(e){
+      var cb = e.target.closest('[data-sched-day]');
+      if(!cb) return;
+      var row = cb.closest('.sched__row');
+      row.classList.toggle('is-off', !cb.checked);
+      row.querySelectorAll('.sched__times input').forEach(function(i){ i.disabled = !cb.checked; });
+    });
+  }
+  document.addEventListener('click', function(e){
+    var add = e.target.closest('[data-master-add]');
+    var edit = e.target.closest('[data-master-edit]');
+    if(!add && !edit) return;
+    document.getElementById('mm-title').textContent = add ? 'Добавить мастера' : 'Редактировать мастера';
+    document.getElementById('mm-name').value =
+      add ? '' : edit.closest('.admin-row').querySelector('.admin-row__title').textContent;
+    document.getElementById('modal-master').classList.add('is-open');
+  });
+
+  /* ---------- Админка: блокировки времени ---------- */
+  var blAllDay = document.getElementById('bl-allday');
+  if(blAllDay){
+    blAllDay.addEventListener('change', function(){
+      document.getElementById('bl-from').disabled = blAllDay.checked;
+      document.getElementById('bl-to').disabled = blAllDay.checked;
+    });
+  }
+  var blAdd = document.getElementById('bl-add');
+  if(blAdd){
+    blAdd.addEventListener('click', function(){
+      var master = document.getElementById('bl-master').value;
+      var day = document.getElementById('bl-day').value;
+      var time = blAllDay.checked
+        ? 'весь день'
+        : document.getElementById('bl-from').value + '–' + document.getElementById('bl-to').value;
+      var reason = document.getElementById('bl-reason').value || 'блокировка';
+      var row = document.createElement('div');
+      row.className = 'admin-row';
+      row.innerHTML =
+        '<div class="admin-row__main">' +
+          '<div class="admin-row__title">' + master + '</div>' +
+          '<div class="admin-row__meta">' + day + ' · ' + time + ' · ' + reason + '</div>' +
+        '</div>' +
+        '<div class="admin-row__side"><button class="btn btn--text" type="button" data-block-del>Удалить</button></div>';
+      document.getElementById('bl-list').appendChild(row);
+      showToast('Блокировка добавлена');
+    });
+  }
+  document.addEventListener('click', function(e){
+    var del = e.target.closest('[data-block-del]');
+    if(!del) return;
+    del.closest('.admin-row').remove();
+    showToast('Блокировка удалена');
+  });
+
+  /* ---------- Первичный рендер при прямом заходе на #reschedule ---------- */
+  if((location.hash || '').slice(1) === 'reschedule') rsRenderDates();
+
+})();
+</script>
+
+</body>
+</html>
