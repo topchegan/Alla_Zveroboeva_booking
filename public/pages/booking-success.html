@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вы записаны — Алла Зверобоева</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-header="client" class="booking-page">
+<div id="site-header"></div>
+
+<div class="booking-narrow booking-steps"><div class="steps" id="bk-steps"></div></div>
+<main class="booking-narrow success-wrap">
+  <div class="success-card" id="success-card">
+    <span class="success-check"><svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg></span>
+    <h2>Вы записаны!</h2>
+    <p class="success-sum" id="bk-success-sum">—</p>
+    <div class="confirm-actions" style="justify-content:center">
+      <a class="btn btn--secondary" href="/">На главную</a>
+      <a class="btn btn--primary" href="/cabinet">Мои записи</a>
+    </div>
+  </div>
+  <div class="state-box" id="success-missing" hidden>
+    <p class="state-box__title">Запись не найдена</p>
+    <p class="small muted">Проверьте свои записи в личном кабинете.</p>
+    <a class="btn btn--primary" href="/cabinet" style="margin-top:var(--sp-3)">Мои записи</a>
+  </div>
+</main>
+
+<script src="/js/mock-data.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/pages/success.js"></script>
+</body>
+</html>

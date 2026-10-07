@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Блокировки — админ-панель</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body data-header="admin">
+<div id="site-header"></div>
+
+<main class="booking-narrow" style="padding-top:var(--sp-5); padding-bottom:var(--sp-8)">
+  <nav class="tabs" data-admin-tabs="/admin/blocks" style="margin-bottom:var(--sp-6)"></nav>
+  <div class="page-head">
+    <div>
+      <h2 class="booking-title">Блокировки времени</h2>
+      <p class="booking-sub">Обеды, личное время и выходные — в это время запись к мастеру недоступна.</p>
+    </div>
+  </div>
+  <div class="admin-list" id="bl-list" style="margin-bottom:var(--sp-6)"><div class="spinner"></div></div>
+
+  <form class="admin-row" id="bl-form" style="align-items:flex-start" novalidate>
+    <div class="admin-row__main" style="min-width:min(100%, 280px)">
+      <div class="admin-row__title" style="margin-bottom:var(--sp-4)">Добавить блокировку</div>
+      <div class="modal__form" style="margin-top:0">
+        <label class="field">
+          <span class="field__label">Мастер</span>
+          <select class="field__input select" id="bl-master"></select>
+        </label>
+        <label class="field">
+          <span class="field__label">День недели</span>
+          <select class="field__input select" id="bl-day">
+            <option value="1">пн</option>
+            <option value="2">вт</option>
+            <option value="3">ср</option>
+            <option value="4" selected>чт</option>
+            <option value="5">пт</option>
+            <option value="6">сб</option>
+            <option value="0">вс</option>
+          </select>
+        </label>
+        <div class="field">
+          <span class="field__label">Время</span>
+          <div class="sched__times">
+            <input class="field__input" type="text" id="bl-from" value="13:00" inputmode="numeric" aria-label="Начало"> –
+            <input class="field__input" type="text" id="bl-to" value="14:00" inputmode="numeric" aria-label="Конец">
+          </div>
+          <label class="check" style="margin-top:var(--sp-3)">
+            <input type="checkbox" id="bl-allday"><span class="check__box"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span>
+            <span>Весь день</span>
+          </label>
+        </div>
+        <label class="field">
+          <span class="field__label">Причина</span>
+          <input class="field__input" type="text" id="bl-reason" placeholder="Например: обед" value="обед">
+        </label>
+<div class="auth-error alert" id="bl-error" role="alert" style="text-align:left">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span data-error-text></span>
+    </div>
+        <div>
+          <button class="btn btn--primary" type="submit">Добавить блокировку</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</main>
+
+<script src="/js/mock-data.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/pages/admin-blocks.js"></script>
+</body>
+</html>
