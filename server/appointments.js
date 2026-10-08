@@ -1,12 +1,20 @@
-// Запись в формате, который ждут страницы (как appointmentView в public/js/api.js).
+// Записи: выборка и формат, который ждут страницы (как appointmentView в public/js/api.js).
 
 const { DAY_MS, fromMin, toMin, mskToEpoch } = require('./time');
+const { CHANGE_LIMIT_HOURS } = require('./salon');
+const { designMinutes, designPrice, designOptionRow } = require('./slots');
 
-const CHANGE_LIMIT_MS = DAY_MS; // клиент может отменить или перенести не позже чем за 24 ч
+const CHANGE_LIMIT_MS = CHANGE_LIMIT_HOURS * DAY_MS / 24; // клиент может отменить или перенести не позже чем за 24 ч
 
-function designMinutes(nails, option) {
-  if (!nails) return 0;
-  return nails <= 4 ? option.extra_min_2_4 : option.extra_min_6_10;
+const SELECT_VIEW = `SELECT a.*, s.name AS service_name, m.name AS master_name, u.name AS client_name
+  FROM appointments a
+  JOIN services s ON s.id = a.service_id
+  JOIN masters m ON m.id = a.master_id
+  JOIN users u ON u.id = a.client_id`;
+
+// До начала визита не меньше 24 ч
+function clientCanChange(row) {
+  return mskToEpoch(row.start_at) - Date.now() >= CHANGE_LIMIT_MS;
 }
 
 // row — appointments + service_name, master_name, client_name; option — строка design_option
@@ -30,7 +38,7 @@ function appointmentView(row, option, forClient) {
     endTime: fromMin((toMin(time) + row.duration_min) % 1440),
     duration: row.duration_min,
     designNails: nails,
-    designPrice: nails ? (nails / 2) * option.price_per_two_nails : 0,
+    designPrice: designPrice(nails, option),
     designMinutes: designMinutes(nails, option),
     price: row.price,
     status: row.status,
@@ -42,15 +50,19 @@ function appointmentView(row, option, forClient) {
 }
 
 function listClientAppointments(db, clientId) {
-  const option = db.prepare('SELECT * FROM design_option WHERE id = 1').get();
-  const rows = db.prepare(`SELECT a.*, s.name AS service_name, m.name AS master_name, u.name AS client_name
-    FROM appointments a
-    JOIN services s ON s.id = a.service_id
-    JOIN masters m ON m.id = a.master_id
-    JOIN users u ON u.id = a.client_id
-    WHERE a.client_id = ?
-    ORDER BY a.start_at, a.id`).all(clientId);
+  const option = designOptionRow(db);
+  const rows = db.prepare(`${SELECT_VIEW} WHERE a.client_id = ? ORDER BY a.start_at, a.id`).all(clientId);
   return rows.map((r) => appointmentView(r, option, true));
 }
 
-module.exports = { appointmentView, listClientAppointments };
+// Запись клиента по id (с названиями) или null — чужая и несуществующая неотличимы
+function findClientAppointment(db, id, clientId) {
+  return db.prepare(`${SELECT_VIEW} WHERE a.id = ? AND a.client_id = ?`).get(id, clientId) || null;
+}
+
+function clientAppointmentView(db, id, clientId) {
+  const row = findClientAppointment(db, id, clientId);
+  return row ? appointmentView(row, designOptionRow(db), true) : null;
+}
+
+module.exports = { appointmentView, listClientAppointments, findClientAppointment, clientAppointmentView, clientCanChange };

@@ -3,10 +3,9 @@
 
 const { transaction } = require('./db');
 const { hashPassword } = require('./password');
-const { toMin, fromMin, mskNow, addDays, weekdayOf } = require('./time');
-
-const SLOT_STEP = 30;
-const BOOKING_DAYS = 30;
+const { toMin, fromMin, mskNow, addDays, weekdayOf, stamp } = require('./time');
+const { BOOKING_DAYS } = require('./salon');
+const { calcSlots } = require('./slots');
 
 /* ---------- Справочники — строго по CLAUDE.md, п. 8 ---------- */
 
@@ -74,11 +73,6 @@ function prevWeekday(today, weekday) {
   while (weekdayOf(d) !== weekday) d = addDays(d, -1);
   return d;
 }
-// 'YYYY-MM-DD' + минуты от полуночи → 'YYYY-MM-DD HH:MM' (переход через полночь учитывается)
-function stamp(date, minutes) {
-  return `${addDays(date, Math.floor(minutes / 1440))} ${fromMin(minutes % 1440)}`;
-}
-
 /* ---------- Группы seed ---------- */
 
 function isEmpty(db, table) {
@@ -123,28 +117,16 @@ async function seedAdmin(db, env, log) {
   log(`[seed] администратор создан: ${email}`);
 }
 
-// Ближайшее рабочее время мастера для визита duration минут: учитывает график,
-// блокировки и уже занятые интервалы busy ([{date, from, to}] в минутах).
-function findSoonestSlot(db, masterId, duration, busy) {
-  const schedule = db.prepare('SELECT weekday, start_time, end_time FROM master_schedule WHERE master_id = ?').all(masterId);
-  const blocks = db.prepare('SELECT weekday, all_day, start_time, end_time FROM blocks WHERE master_id = ?').all(masterId);
+// Ближайшее свободное время мастера для визита duration минут — тем же расчётом слотов,
+// что и запись клиента (график, блокировки, уже вставленные записи, прошедшее время сегодня).
+function findSoonestSlot(db, masterId, duration) {
   const now = mskNow();
   for (let i = 0; i < BOOKING_DAYS; i++) {
     const date = addDays(now.date, i);
-    const wd = weekdayOf(date);
-    const hours = schedule.find((s) => s.weekday === wd);
-    if (!hours) continue;
-    const dayBlocks = blocks.filter((b) => b.weekday === wd);
-    if (dayBlocks.some((b) => b.all_day)) continue;
-    const taken = [
-      ...dayBlocks.map((b) => [toMin(b.start_time), toMin(b.end_time)]),
-      ...busy.filter((x) => x.date === date).map((x) => [x.from, x.to]),
-    ];
-    for (let t = toMin(hours.start_time); t + duration <= toMin(hours.end_time); t += SLOT_STEP) {
-      if (i === 0 && t <= now.minutes) continue;
-      if (taken.some(([a, b]) => t < b && t + duration > a)) continue;
-      return { date, minutes: t, hoursAhead: (i * 1440 + t - now.minutes) / 60 };
-    }
+    const [first] = calcSlots(db, { masterId, date, duration });
+    if (!first) continue;
+    const minutes = toMin(first);
+    return { date, minutes, hoursAhead: (i * 1440 + minutes - now.minutes) / 60 };
   }
   return null;
 }
@@ -161,34 +143,8 @@ async function seedDemo(db, env, log) {
 
   const services = new Map(db.prepare('SELECT id, duration_min, price FROM services').all().map((s) => [s.id, s]));
   const today = mskNow().date;
-
-  // Сначала записи с фиксированной датой, затем «ближайшая» — в свободное от них время
-  const planned = [];
-  for (const spec of DEMO_APPOINTMENTS) {
-    if (spec.when.type === 'soonest') continue;
-    const date = spec.when.type === 'prev' ? prevWeekday(today, spec.when.weekday) : nextWeekday(today, spec.when.weekday, spec.when.minDays);
-    planned.push({ spec, date, minutes: toMin(spec.time) });
-  }
-  for (const spec of DEMO_APPOINTMENTS) {
-    if (spec.when.type !== 'soonest') continue;
-    const duration = services.get(spec.serviceId).duration_min;
-    const busy = planned
-      .filter((p) => p.spec.masterId === spec.masterId && p.spec.status === 'active')
-      .map((p) => ({ date: p.date, from: p.minutes, to: p.minutes + services.get(p.spec.serviceId).duration_min }));
-    const slot = findSoonestSlot(db, spec.masterId, duration, busy);
-    if (!slot) {
-      log(`[seed] ВНИМАНИЕ: демо-запись #${spec.n} не создана — у мастера нет свободного времени в ближайшие ${BOOKING_DAYS} дней`);
-      continue;
-    }
-    planned.push({ spec, date: slot.date, minutes: slot.minutes });
-    const where = `${slot.date} ${fromMin(slot.minutes)} (через ${slot.hoursAhead.toFixed(1)} ч)`;
-    if (slot.hoursAhead < 24) {
-      log(`[seed] демо-запись #${spec.n} (меньше 24 ч до визита): ${where}`);
-    } else {
-      log(`[seed] демо-запись #${spec.n}: в ближайшие 24 ч у мастера нет рабочего времени — поставлена на ближайшее рабочее время ${where}`);
-    }
-  }
-  planned.sort((a, b) => a.spec.n - b.spec.n);
+  const messages = [];
+  let created = 0;
 
   transaction(db, () => {
     const createdAt = new Date().toISOString();
@@ -198,16 +154,38 @@ async function seedDemo(db, env, log) {
       userIds.set(c.key, Number(insUser.run(c.name, c.email, hashes[i], createdAt).lastInsertRowid));
     });
     const insAppt = db.prepare(`INSERT INTO appointments
-      (client_id, master_id, service_id, design_nails, start_at, end_at, duration_min, price, status, cancelled_by, created_at, updated_at)
-      VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)`);
-    for (const { spec, date, minutes } of planned) {
+      (id, client_id, master_id, service_id, design_nails, start_at, end_at, duration_min, price, status, cancelled_by, created_at, updated_at)
+      VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)`);
+    const insert = (spec, date, minutes) => {
       const s = services.get(spec.serviceId);
-      insAppt.run(userIds.get(spec.client), spec.masterId, spec.serviceId,
+      insAppt.run(spec.n, userIds.get(spec.client), spec.masterId, spec.serviceId,
         stamp(date, minutes), stamp(date, minutes + s.duration_min), s.duration_min, s.price,
         spec.status, spec.cancelledBy || null, createdAt, createdAt);
+      created++;
+    };
+
+    // Сначала записи с фиксированной датой, затем «ближайшая» — в свободное от них время
+    for (const spec of DEMO_APPOINTMENTS) {
+      if (spec.when.type === 'soonest') continue;
+      const date = spec.when.type === 'prev' ? prevWeekday(today, spec.when.weekday) : nextWeekday(today, spec.when.weekday, spec.when.minDays);
+      insert(spec, date, toMin(spec.time));
+    }
+    for (const spec of DEMO_APPOINTMENTS) {
+      if (spec.when.type !== 'soonest') continue;
+      const slot = findSoonestSlot(db, spec.masterId, services.get(spec.serviceId).duration_min);
+      if (!slot) {
+        messages.push(`[seed] ВНИМАНИЕ: демо-запись #${spec.n} не создана — у мастера нет свободного времени в ближайшие ${BOOKING_DAYS} дней`);
+        continue;
+      }
+      insert(spec, slot.date, slot.minutes);
+      const where = `${slot.date} ${fromMin(slot.minutes)} (через ${slot.hoursAhead.toFixed(1)} ч)`;
+      messages.push(slot.hoursAhead < 24
+        ? `[seed] демо-запись #${spec.n} (меньше 24 ч до визита): ${where}`
+        : `[seed] демо-запись #${spec.n}: в ближайшие 24 ч у мастера нет рабочего времени — поставлена на ближайшее рабочее время ${where}`);
     }
   });
-  log(`[seed] демо-клиенты: ${DEMO_CLIENTS.length}, демо-записи: ${planned.length}`);
+  messages.forEach((m) => log(m));
+  log(`[seed] демо-клиенты: ${DEMO_CLIENTS.length}, демо-записи: ${created}`);
 }
 
 async function runSeed(db, env = process.env, log = console.log) {

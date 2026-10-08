@@ -24,6 +24,7 @@
     barPrice: document.getElementById('bk-bar-price'),
     next: document.getElementById('bk-next'),
     confirmError: document.getElementById('confirm-error'),
+    timeError: document.getElementById('time-error'),
     submit: document.getElementById('cf-submit')
   };
 
@@ -123,11 +124,17 @@
     if (!bk.service.isNail) bk.nails = null;
     resetAfterService();
     renderServices();
-    API.getMasters({ serviceId: id, withDesign: true }).then(function(list){
-      designMasters = list;
-      renderDesign();
-      updateBar();
-    });
+    designMasters = [];
+    renderDesign();
+    if (bk.service.isNail) {
+      // Мастера этой услуги, которые выполняют дизайн: от них зависит, показывать ли опцию
+      API.getMasters({ serviceId: id, designNails: design.nails[0] }).then(function(list){
+        if (!bk.service || bk.service.id !== id) return;
+        designMasters = list;
+        renderDesign();
+        updateBar();
+      });
+    }
     updateBar();
   });
   el.nails.addEventListener('click', function(e){
@@ -146,7 +153,7 @@
       ? 'Опция «Дизайн ногтей» выполняется не всеми мастерами — показаны только подходящие.'
       : 'Показаны только мастера, которые выполняют выбранную услугу.';
     el.masters.innerHTML = '<div class="spinner"></div>';
-    API.getMasters({ serviceId: bk.service.id, withDesign: !!bk.nails }).then(function(list){
+    API.getMasters({ serviceId: bk.service.id, designNails: bk.nails }).then(function(list){
       masters = list;
       if (!list.length) {
         el.masters.innerHTML = '<div class="state-box"><p class="state-box__title">Нет доступных мастеров</p><p class="small muted">Выберите другую услугу</p></div>';
@@ -185,7 +192,11 @@
       picker = UI.createTimePicker(document.getElementById('bk-time'), {
         loadDates: function(){ return API.getAvailableDates(bk.master.id, bk.service.id, bk.nails); },
         loadSlots: function(date){ return API.getSlots(bk.master.id, date, bk.service.id, bk.nails); },
-        onChange: function(sel){ bk.date = sel.date; bk.time = sel.time; updateBar(); }
+        onChange: function(sel){
+          bk.date = sel.date; bk.time = sel.time;
+          if (sel.time) UI.hideError(el.timeError);
+          updateBar();
+        }
       });
     }
     if (key !== timeKey) { timeKey = key; picker.reload(); }
@@ -216,8 +227,14 @@
       location.href = '/booking/success?id=' + a.id;
     }, function(err){
       el.submit.disabled = false;
+      if (err.code === 'SLOT_TAKEN' && picker) {
+        // Время заняли, пока клиент подтверждал: возвращаем к выбору времени со свежим списком слотов
+        picker.refreshSlots();
+        go(3);
+        UI.showError(el.timeError, err.message || 'Это время уже заняли, выберите другое.');
+        return;
+      }
       UI.showError(el.confirmError, err.message || 'Не удалось создать запись');
-      if (err.code === 'SLOT_TAKEN' && picker) picker.refreshSlots();
     });
   });
 

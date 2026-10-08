@@ -1,7 +1,7 @@
 // Сервер онлайн-записи «Алла Зверобоева».
 // При старте: база данных (миграции и начальные данные) → API → страницы и статика.
-// Вход, регистрация и записи клиента идут через API; остальные данные на страницах
-// пока тестовые (public/js/mock-data.js) — их переводим на следующих шагах.
+// Клиентские страницы (каталог, запись, кабинет, перенос) работают через API;
+// админ-панель пока на тестовых данных (public/js/mock-data.js) — её переводим на этапе 3.
 
 const path = require('node:path');
 const express = require('express');
@@ -12,6 +12,8 @@ const { loadUser } = require('./server/session');
 const { requireJson, apiNotFound, apiErrorHandler } = require('./server/http');
 const { authRouter } = require('./server/routes/auth');
 const { meRouter } = require('./server/routes/me');
+const { catalogRouter } = require('./server/routes/catalog');
+const { appointmentsRouter } = require('./server/routes/appointments');
 
 const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -19,6 +21,8 @@ const PAGES_DIR = path.join(PUBLIC_DIR, 'pages');
 
 // Адрес страницы → HTML-файл в public/pages и кто может её открыть:
 //   user  — только вошедший (гостя — на /login?next=…);
+//   client — только клиент (гостя — на /login?next=…, администратора — в /admin:
+//            по паспорту записи создают клиенты);
 //   guest — только гость (вошедшего — в кабинет или админ-панель).
 // Защита /admin — на шаге 9.
 const PAGES = {
@@ -26,7 +30,7 @@ const PAGES = {
   '/login': { file: 'login.html', access: 'guest' },
   '/register': { file: 'register.html', access: 'guest' },
   '/forgot-password': { file: 'forgot-password.html' },
-  '/booking': { file: 'booking.html', access: 'user' },
+  '/booking': { file: 'booking.html', access: 'client' },
   '/booking/success': { file: 'booking-success.html', access: 'user' },
   '/cabinet': { file: 'cabinet.html', access: 'user' },
   '/cabinet/reschedule': { file: 'reschedule.html', access: 'user' },
@@ -52,14 +56,19 @@ function createApp(db) {
   app.use('/api', express.json({ limit: '10kb' }), requireJson);
   app.use('/api/auth', authRouter(db));
   app.use('/api/me', meRouter(db));
+  app.use('/api/appointments', appointmentsRouter(db));
+  app.use('/api', catalogRouter(db));
   app.use('/api', apiNotFound);
   app.use('/api', apiErrorHandler);
 
   // Страницы
   for (const [route, page] of Object.entries(PAGES)) {
     app.get(route, (req, res) => {
-      if (page.access === 'user' && !req.user) {
+      if ((page.access === 'user' || page.access === 'client') && !req.user) {
         return res.redirect(302, `/login?next=${encodeURIComponent(req.originalUrl)}`);
+      }
+      if (page.access === 'client' && req.user.role !== 'client') {
+        return res.redirect(302, homeFor(req.user));
       }
       if (page.access === 'guest' && req.user) {
         return res.redirect(302, homeFor(req.user));
