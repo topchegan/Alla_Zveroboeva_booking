@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
     "db:check": "node scripts/check-db.js",
-    "auth:check": "node scripts/check-auth.js"
+    "auth:check": "node scripts/check-auth.js",
+    "booking:check": "node scripts/check-booking.js"
   },
   "engines": {
     "node": ">=22.9"

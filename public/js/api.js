@@ -1,25 +1,28 @@
 /* ============================================================
    API — единственная точка доступа к данным для всех страниц.
 
-   Этап 2 (переход по шагам): вход, регистрация, выход, текущий пользователь
-   и записи клиента — запросы к серверному API. Остальные функции пока
-   возвращают тестовые данные из mock-data.js (состояние — в localStorage),
-   их тела заменятся на запросы к API на следующих шагах; имена функций,
-   параметры и формат ответов останутся прежними.
+   Клиентские функции (пользователь, каталог, свободное время, запись,
+   отмена и перенос) — запросы к серверному API.
+   Функции администратора пока работают на тестовых данных из mock-data.js
+   (состояние — в localStorage); mock-data.js подключён только на страницах
+   админки, и тестовое состояние создаётся при первом вызове admin-функции.
+   На этапе 3 их тела заменятся на запросы к API; имена функций, параметры
+   и формат ответов останутся прежними.
 
    Ошибка — отклонённый Promise с объектом { code, message }:
      VALIDATION          — неверные данные;
      NOT_FOUND           — объект не найден (или чужая запись);
      SLOT_TAKEN          — выбранное время уже занято;
      TOO_LATE            — до визита меньше 24 часов (для клиента);
+     ALREADY_CANCELLED   — запись уже отменена;
      UNAUTHORIZED        — нужно войти;
+     FORBIDDEN           — действие недоступно для этой роли;
      EMAIL_TAKEN         — email уже зарегистрирован;
      INVALID_CREDENTIALS — неверный email или пароль;
      TOO_MANY_ATTEMPTS   — слишком много неудачных попыток входа;
      NETWORK, INTERNAL   — нет связи с сервером / ошибка сервера.
    ============================================================ */
 window.API = (function(){
-  var SEED = window.MOCK_DATA;
   var STORAGE_KEY = 'az-mock-v1';
   var DAY_MS = 24 * 60 * 60 * 1000;
   var MSK_OFFSET_MIN = 180; // Москва: UTC+3 без перехода на летнее время
@@ -50,8 +53,14 @@ window.API = (function(){
   function isDate(s){ return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s); }
   function isTime(s){ return typeof s === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(s); }
 
-  /* ---------- Состояние заглушки ---------- */
-  var state = null;
+  /* ---------- Состояние заглушки (только админка) ---------- */
+  var state = null, SEED = null;
+  function ensureState(){
+    if (state) return;
+    SEED = window.MOCK_DATA;
+    if (!SEED) throw new Error('mock-data.js не подключён');
+    load();
+  }
 
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
   function save(){
@@ -221,11 +230,6 @@ window.API = (function(){
     }
     return out;
   }
-  function isWorkingDay(master, date){
-    var weekday = weekdayOf(date);
-    if (!master.schedule[weekday]) return false;
-    return !state.blocks.some(function(b){ return b.masterId === master.id && b.weekday === weekday && b.allDay; });
-  }
   function inBookingWindow(date){
     var today = mskNow().date;
     return date >= today && date <= addDays(today, state.salon.bookingDays - 1);
@@ -299,31 +303,6 @@ window.API = (function(){
   }
   function sortByTime(a, b){ return (a.date + a.time).localeCompare(b.date + b.time); }
 
-  /* Тестовый клиент для функций, ещё не переведённых на API (создание, отмена, перенос записи) */
-  var CLIENT_ID = 1;
-  function myAppointment(id){
-    var a = byId(state.appointments, id);
-    return a && a.clientId === CLIENT_ID ? a : null;
-  }
-
-  /* Общая проверка параметров визита (услуга, мастер, дизайн) */
-  function resolveVisit(serviceId, masterId, designNails){
-    var service = byId(state.services, serviceId);
-    if (!service || !service.active) return { error: 'Услуга недоступна' };
-    var master = byId(state.masters, masterId);
-    if (!master || !master.active || master.serviceIds.indexOf(service.id) === -1) return { error: 'Мастер не выполняет эту услугу' };
-    var nails = designNails ? Number(designNails) : null;
-    if (nails) {
-      if (!service.isNail) return { error: 'Дизайн ногтей доступен только к ногтевым услугам' };
-      if (!master.doesDesign) return { error: 'Мастер не выполняет дизайн ногтей' };
-      if (state.designOption.nails.indexOf(nails) === -1) return { error: 'Неверное число ногтей' };
-    }
-    return {
-      service: service, master: master, nails: nails,
-      duration: service.duration + designExtraMinutes(nails),
-      price: service.price + designPrice(nails)
-    };
-  }
   function checkNewTime(appointment, date, time, forClient){
     if (!isDate(date) || !isTime(time)) return fail('VALIDATION', 'Выберите дату и время');
     if (forClient && !inBookingWindow(date)) return fail('VALIDATION', 'Запись открыта на 30 дней вперёд');
@@ -332,9 +311,17 @@ window.API = (function(){
     return null;
   }
 
-  load();
+  /* Параметры запроса: пустые значения не передаются */
+  function qs(params){
+    var parts = [];
+    for (var k in params) {
+      if (params[k] === undefined || params[k] === null || params[k] === '' || params[k] === false) continue;
+      parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+    }
+    return parts.length ? '?' + parts.join('&') : '';
+  }
 
-  return {
+  var api = {
     /* ===== Пользователь (серверное API) ===== */
     /* { id, name, email, role } или null для гостя */
     getCurrentUser: fetchMe,
@@ -358,122 +345,50 @@ window.API = (function(){
       return request('POST', '/api/auth/logout', {}).then(function(){ mePromise = Promise.resolve(null); return null; });
     },
 
-    /* ===== Каталог ===== */
-    getSalonInfo: function(){ return ok(state.salon); },
-    getServices: function(){
-      return ok(state.services.filter(function(s){ return s.active; }));
-    },
-    getDesignOption: function(){
-      var o = clone(state.designOption);
-      o.designers = state.masters.filter(function(m){ return m.active && m.doesDesign; }).map(function(m){ return m.name; });
-      return ok(o);
-    },
-    /* Активные мастера; с фильтром — только выполняющие услугу (и дизайн, если выбран) */
+    /* ===== Каталог (серверное API) ===== */
+    getSalonInfo: function(){ return request('GET', '/api/salon'); },
+    /* Только активные услуги */
+    getServices: function(){ return request('GET', '/api/services'); },
+    getDesignOption: function(){ return request('GET', '/api/design-option'); },
+    /* Активные мастера; filter: { serviceId, designNails } — только выполняющие услугу (и дизайн, если выбран) */
     getMasters: function(filter){
       filter = filter || {};
-      var list = state.masters.filter(function(m){
-        if (!m.active) return false;
-        if (filter.serviceId && m.serviceIds.indexOf(Number(filter.serviceId)) === -1) return false;
-        if (filter.withDesign && !m.doesDesign) return false;
-        return true;
-      });
-      return ok(list.map(masterView));
+      return request('GET', '/api/masters' + qs({ serviceId: filter.serviceId, designNails: filter.designNails }));
     },
 
-    /* ===== Запись (клиент) ===== */
+    /* ===== Запись (клиент, серверное API) ===== */
     /* Даты на 30 дней вперёд: working — рабочий день мастера, hasSlots — есть свободное время */
     getAvailableDates: function(masterId, serviceId, designNails){
-      var visit = resolveVisit(serviceId, masterId, designNails);
-      if (visit.error) return fail('VALIDATION', visit.error);
-      var today = mskNow().date, out = [];
-      for (var i = 0; i < state.salon.bookingDays; i++) {
-        var date = addDays(today, i);
-        var working = isWorkingDay(visit.master, date);
-        out.push({
-          date: date,
-          weekday: weekdayOf(date),
-          working: working,
-          hasSlots: working && calcSlots(state, visit.master.id, date, visit.duration, null).length > 0
-        });
-      }
-      return ok(out);
+      return request('GET', '/api/available-dates' + qs({ masterId: masterId, serviceId: serviceId, designNails: designNails }));
     },
     getSlots: function(masterId, date, serviceId, designNails){
-      var visit = resolveVisit(serviceId, masterId, designNails);
-      if (visit.error) return fail('VALIDATION', visit.error);
-      if (!isDate(date) || !inBookingWindow(date)) return ok([], 350);
-      return ok(calcSlots(state, visit.master.id, date, visit.duration, null), 350);
+      return request('GET', '/api/slots' + qs({ masterId: masterId, serviceId: serviceId, date: date, designNails: designNails }));
     },
+    /* data: { serviceId, masterId, date, time, designNails }; цену и длительность считает сервер */
     createAppointment: function(data){
       data = data || {};
-      var user = byId(state.users, CLIENT_ID);
-      var visit = resolveVisit(data.serviceId, data.masterId, data.designNails);
-      if (visit.error) return fail('VALIDATION', visit.error);
-      if (!isDate(data.date) || !isTime(data.time) || !inBookingWindow(data.date)) return fail('VALIDATION', 'Выберите дату и время');
-      // Повторная проверка: слот всё ещё свободен
-      if (calcSlots(state, visit.master.id, data.date, visit.duration, null).indexOf(data.time) === -1) {
-        return fail('SLOT_TAKEN', 'Это время уже заняли, выберите другое.', 300);
-      }
-      var a = {
-        id: nextId(state.appointments), clientId: user.id, serviceId: visit.service.id, masterId: visit.master.id,
-        date: data.date, time: data.time, duration: visit.duration, designNails: visit.nails, price: visit.price,
-        status: 'active', cancelledBy: null
-      };
-      state.appointments.push(a);
-      save();
-      return ok(appointmentView(a, true), 300);
+      return request('POST', '/api/appointments', {
+        serviceId: data.serviceId, masterId: data.masterId, date: data.date, time: data.time, designNails: data.designNails || 0
+      });
     },
-    /* Записи текущего клиента — из базы (серверное API) */
-    getMyAppointments: function(){
-      return request('GET', '/api/me/appointments');
-    },
-    getAppointment: function(id){
-      var a = myAppointment(id);
-      if (!a) return fail('NOT_FOUND', 'Запись не найдена');
-      return ok(appointmentView(a, true));
-    },
-    cancelAppointment: function(id){
-      var a = myAppointment(id);
-      if (!a) return fail('NOT_FOUND', 'Запись не найдена');
-      if (!appointmentView(a, true).canChange) return fail('TOO_LATE', 'Отменить запись можно не позже чем за 24 часа. Свяжитесь с администратором.');
-      a.status = 'cancelled';
-      a.cancelledBy = 'client';
-      save();
-      return ok(appointmentView(a, true));
-    },
-    /* Слоты для переноса: без учёта самой переносимой записи */
-    getRescheduleSlots: function(appointmentId, date){
-      var a = byId(state.appointments, appointmentId);
-      if (!a) return fail('NOT_FOUND', 'Запись не найдена');
-      if (!isDate(date) || !inBookingWindow(date)) return ok([], 350);
-      return ok(calcSlots(state, a.masterId, date, a.duration, a.id), 350);
-    },
+    /* Записи текущего клиента */
+    getMyAppointments: function(){ return request('GET', '/api/me/appointments'); },
+    getAppointment: function(id){ return request('GET', '/api/appointments/' + encodeURIComponent(id)); },
+    cancelAppointment: function(id){ return request('POST', '/api/appointments/' + encodeURIComponent(id) + '/cancel', {}); },
+    /* Даты и слоты для переноса: без учёта самой переносимой записи */
     getRescheduleDates: function(appointmentId){
-      var a = byId(state.appointments, appointmentId);
-      if (!a) return fail('NOT_FOUND', 'Запись не найдена');
-      var master = byId(state.masters, a.masterId);
-      var today = mskNow().date, out = [];
-      for (var i = 0; i < state.salon.bookingDays; i++) {
-        var date = addDays(today, i);
-        var working = isWorkingDay(master, date);
-        out.push({ date: date, weekday: weekdayOf(date), working: working,
-          hasSlots: working && calcSlots(state, a.masterId, date, a.duration, a.id).length > 0 });
-      }
-      return ok(out);
+      return request('GET', '/api/appointments/' + encodeURIComponent(appointmentId) + '/available-dates');
+    },
+    getRescheduleSlots: function(appointmentId, date){
+      return request('GET', '/api/appointments/' + encodeURIComponent(appointmentId) + '/slots' + qs({ date: date }));
     },
     rescheduleAppointment: function(id, data){
       data = data || {};
-      var a = myAppointment(id);
-      if (!a) return fail('NOT_FOUND', 'Запись не найдена');
-      if (!appointmentView(a, true).canChange) return fail('TOO_LATE', 'Перенести запись можно не позже чем за 24 часа. Свяжитесь с администратором.');
-      var err = checkNewTime(a, data.date, data.time, true);
-      if (err) return err;
-      a.date = data.date;
-      a.time = data.time;
-      save();
-      return ok(appointmentView(a, true), 300);
-    },
+      return request('POST', '/api/appointments/' + encodeURIComponent(id) + '/reschedule', { date: data.date, time: data.time });
+    }
+  };
 
+  var admin = {
     /* ===== Администратор: записи ===== */
     getAllAppointments: function(filter){
       filter = filter || {};
@@ -606,6 +521,15 @@ window.API = (function(){
       return ok({ id: b.id });
     }
   };
+
+  /* Функции админки: перед первым вызовом создаётся тестовое состояние */
+  Object.keys(admin).forEach(function(name){
+    api[name] = function(){
+      try { ensureState(); } catch (e) { return fail('INTERNAL', 'Тестовые данные админки недоступны'); }
+      return admin[name].apply(null, arguments);
+    };
+  });
+  return api;
 
   /* ---------- Проверки форм администратора ---------- */
   function validateService(d){

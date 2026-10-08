@@ -25,4 +25,9 @@ function mskToEpoch(stamp) {
   return parseDate(date) + (toMin(time) - MSK_OFFSET_MIN) * 60000;
 }
 
-module.exports = { MSK_OFFSET_MIN, DAY_MS, pad, toMin, fromMin, mskNow, parseDate, addDays, weekdayOf, mskToEpoch };
+// 'YYYY-MM-DD' + минуты от полуночи → 'YYYY-MM-DD HH:MM' (переход через полночь учитывается)
+function stamp(date, minutes) {
+  return `${addDays(date, Math.floor(minutes / 1440))} ${fromMin(minutes % 1440)}`;
+}
+
+module.exports = { MSK_OFFSET_MIN, DAY_MS, pad, toMin, fromMin, mskNow, parseDate, addDays, weekdayOf, mskToEpoch, stamp };
