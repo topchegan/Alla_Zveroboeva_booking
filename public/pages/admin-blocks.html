@@ -20,6 +20,10 @@
       <p class="booking-sub">Обеды, личное время и выходные — в это время запись к мастеру недоступна.</p>
     </div>
   </div>
+  <div class="alert alert--warn page-alert" id="bl-warning" role="status">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    <span data-error-text></span>
+  </div>
   <div class="admin-list" id="bl-list" style="margin-bottom:var(--sp-6)"><div class="spinner"></div></div>
 
   <form class="admin-row" id="bl-form" style="align-items:flex-start" novalidate>
@@ -69,7 +73,6 @@
   </form>
 </main>
 
-<script src="/js/mock-data.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/ui.js"></script>
 <script src="/js/pages/admin-blocks.js"></script>

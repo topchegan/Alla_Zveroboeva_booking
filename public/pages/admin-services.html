@@ -21,11 +21,44 @@
     </div>
     <button class="btn btn--primary" type="button" id="service-add">Добавить услугу</button>
   </div>
+  <div class="alert alert--warn page-alert" id="svc-warning" role="status">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    <span data-error-text></span>
+  </div>
   <div class="admin-list" id="services-list"><div class="spinner"></div></div>
   <p class="booking-card__note" style="margin-top:var(--sp-5)">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-    Отключённая услуга не показывается при новой записи, но сохраняется в старых записях
+    Отключённая услуга не показывается при новой записи, но сохраняется в старых записях.
+    Изменение цены и длительности не меняет уже созданные записи.
   </p>
+
+  <form class="admin-row" id="design-form" style="align-items:flex-start; margin-top:var(--sp-6)" novalidate>
+    <div class="admin-row__main" style="min-width:min(100%, 280px)">
+      <div class="admin-row__title">Опция «Дизайн ногтей»</div>
+      <div class="admin-row__meta">Добавляется к ногтевым услугам у мастеров, которые выполняют дизайн. 2–10 ногтей, чётное число.</div>
+      <div class="modal__form">
+        <label class="field">
+          <span class="field__label">Цена за 2 ногтя, ₽</span>
+          <input class="field__input" type="number" min="1" inputmode="numeric" id="do-price">
+        </label>
+        <label class="field">
+          <span class="field__label">Дополнительное время за 2–4 ногтя, минут</span>
+          <input class="field__input" type="number" min="1" inputmode="numeric" id="do-min24">
+        </label>
+        <label class="field">
+          <span class="field__label">Дополнительное время за 6–10 ногтей, минут</span>
+          <input class="field__input" type="number" min="1" inputmode="numeric" id="do-min610">
+        </label>
+        <div class="auth-error alert" id="do-error" role="alert" style="text-align:left">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          <span data-error-text></span>
+        </div>
+        <div>
+          <button class="btn btn--primary" type="submit">Сохранить опцию</button>
+        </div>
+      </div>
+    </div>
+  </form>
 </main>
 
 <!-- Модальное окно: форма услуги -->
@@ -39,11 +72,11 @@
       </label>
       <label class="field">
         <span class="field__label">Длительность, минут</span>
-        <input class="field__input" type="number" min="5" step="5" inputmode="numeric" id="ms-min" placeholder="90">
+        <input class="field__input" type="number" min="1" step="5" inputmode="numeric" id="ms-min" placeholder="90">
       </label>
       <label class="field">
         <span class="field__label">Цена, ₽</span>
-        <input class="field__input" type="number" min="0" step="50" inputmode="numeric" id="ms-price" placeholder="1800">
+        <input class="field__input" type="number" min="1" step="50" inputmode="numeric" id="ms-price" placeholder="1800">
       </label>
       <label class="check">
         <input type="checkbox" id="ms-nail"><span class="check__box"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span>
@@ -61,7 +94,6 @@
   </form>
 </div>
 
-<script src="/js/mock-data.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/ui.js"></script>
 <script src="/js/pages/admin-services.js"></script>

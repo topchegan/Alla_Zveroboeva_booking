@@ -825,3 +825,10 @@ a.step:hover .step__dot{ box-shadow:0 0 0 4px var(--pink-tint); }
   /* Карточка записи: бейдж статуса над названием, чтобы текст не сжимался */
   .booking-card__top{ flex-direction:column-reverse; align-items:flex-start; }
 }
+
+/* Предупреждение администратору (данные сохранены, но нужно внимание) */
+.alert--warn{ background:var(--warn-tint); border-color:#EADBB4; color:#7A5A1E; }
+.alert--warn ul{ margin:6px 0 0; padding-left:18px; font-weight:500; }
+.page-alert{ display:none; margin-bottom:var(--sp-5); }
+.page-alert.is-visible{ display:flex; }
+.alert--warn a{ color:inherit; text-decoration:underline; }

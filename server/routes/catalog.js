@@ -39,16 +39,18 @@ function serviceView(s) {
   return { id: s.id, name: s.name, duration: s.duration_min, price: s.price, isNail: Boolean(s.is_nail), active: Boolean(s.is_active) };
 }
 
-function masterView(db, m) {
+// allServices: для админки — вместе с отключёнными услугами (в каталоге — только активные)
+function masterView(db, m, allServices = false) {
   const schedule = {};
   for (const r of db.prepare('SELECT weekday, start_time, end_time FROM master_schedule WHERE master_id = ? ORDER BY weekday').all(m.id)) {
     schedule[r.weekday] = [r.start_time, r.end_time];
   }
   const services = db.prepare(`SELECT s.id, s.name FROM master_services ms JOIN services s ON s.id = ms.service_id
-    WHERE ms.master_id = ? AND s.is_active = 1 ORDER BY s.id`).all(m.id);
+    WHERE ms.master_id = ?${allServices ? '' : ' AND s.is_active = 1'} ORDER BY s.id`).all(m.id);
   return {
     id: m.id,
     name: m.name,
+    specialization: m.specialization,
     initials: initials(m.name),
     role: m.specialization,
     serviceIds: services.map((s) => s.id),
@@ -116,4 +118,4 @@ function catalogRouter(db) {
   return router;
 }
 
-module.exports = { catalogRouter };
+module.exports = { catalogRouter, serviceView, masterView, designOptionView };

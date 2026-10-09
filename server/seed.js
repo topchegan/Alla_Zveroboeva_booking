@@ -41,7 +41,7 @@ const BLOCKS = [
   { masterId: 3, weekday: 6, allDay: 1, from: null,    to: null,    reason: 'выходной' },
 ];
 
-/* ---------- Демо-клиенты и записи — как в public/js/mock-data.js ---------- */
+/* ---------- Демо-клиенты и записи ---------- */
 
 const DEMO_CLIENTS = [
   { key: 1, name: 'Ирина Петрова',  email: 'irina@example.ru' },

@@ -39,6 +39,17 @@
         <option value="cancelled">Отменена</option>
       </select>
     </label>
+    <label class="field">
+      <span class="field__label">Сортировка</span>
+      <select class="field__input select" id="af-order">
+        <option value="asc">Сначала ранние</option>
+        <option value="desc">Сначала поздние</option>
+      </select>
+    </label>
+  </div>
+  <div class="alert page-alert" id="aa-load-error" role="alert">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    <span data-error-text></span>
   </div>
   <div class="admin-list" id="aa-list"><div class="spinner"></div></div>
   <div class="state-box" id="aa-empty" hidden style="margin-top:var(--sp-4); padding:var(--sp-6)">
@@ -80,7 +91,6 @@
   </div>
 </div>
 
-<script src="/js/mock-data.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/ui.js"></script>
 <script src="/js/pages/admin-appointments.js"></script>
