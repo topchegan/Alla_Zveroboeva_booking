@@ -1,4 +1,4 @@
-/* Админ-панель: мастера — услуги мастера, дизайн ногтей, график по дням недели, отключение */
+/* Админ-панель: мастера — специализация, услуги мастера, дизайн ногтей, график по дням недели, отключение */
 (function(){
   var esc = UI.esc;
   var list = document.getElementById('masters-list');
@@ -6,7 +6,8 @@
   var error = document.getElementById('mm-error');
   var servicesBox = document.getElementById('mm-services');
   var schedBox = document.getElementById('mm-sched');
-  var DAYS = [1, 2, 3, 4, 5, 6, 0]; // пн … вс
+  var DAYS = [2, 3, 4, 5, 6]; // салон работает вт–сб
+  var warning = document.getElementById('mst-warning');
   var CHECK = '<span class="check__box"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span>';
   var items = [], services = [], editId = null;
 
@@ -16,6 +17,7 @@
     return '<div class="admin-row' + (m.active ? '' : ' is-off') + '">' +
       '<div class="admin-row__main">' +
         '<div class="admin-row__title">' + esc(m.name) + '</div>' +
+        '<div class="admin-row__meta">' + esc(m.specialization) + '</div>' +
         '<div class="admin-row__meta">' + esc(skills.join(', ')) + '</div>' +
         '<div class="admin-row__meta">' + esc(m.scheduleText) + '</div>' +
       '</div>' +
@@ -30,6 +32,9 @@
     return Promise.all([API.adminGetMasters(), API.adminGetServices()]).then(function(r){
       items = r[0]; services = r[1];
       list.innerHTML = items.map(row).join('');
+    }, function(err){
+      list.innerHTML = '';
+      UI.showError(warning, err.message || 'Не удалось загрузить мастеров');
     });
   }
 
@@ -37,6 +42,7 @@
     editId = m ? m.id : null;
     document.getElementById('mm-title').textContent = m ? 'Редактировать мастера' : 'Добавить мастера';
     document.getElementById('mm-name').value = m ? m.name : '';
+    document.getElementById('mm-spec').value = m ? m.specialization : '';
     servicesBox.innerHTML = services.map(function(s){
       var on = m && m.serviceIds.indexOf(s.id) !== -1;
       return '<label class="check"><input type="checkbox" data-service="' + s.id + '"' + (on ? ' checked' : '') + '>' + CHECK +
@@ -75,8 +81,14 @@
   list.addEventListener('change', function(e){
     var sw = e.target.closest('[data-switch]');
     if (!sw) return;
-    API.setMasterActive(Number(sw.getAttribute('data-switch')), sw.checked).then(function(m){
-      UI.toast(m.active ? 'Мастер включён' : 'Мастер отключён');
+    UI.hideError(warning);
+    API.setMasterActive(Number(sw.getAttribute('data-switch')), sw.checked).then(function(r){
+      UI.toast(r.master.active ? 'Мастер включён' : 'Мастер отключён');
+      // Записи не отменяются автоматически — показываем, сколько их осталось
+      if (r.warning) UI.showError(warning, r.master.name + ': ' + r.warning);
+      load();
+    }, function(err){
+      UI.showError(warning, err.message || 'Не удалось изменить мастера');
       load();
     });
   });
@@ -90,6 +102,7 @@
     });
     var data = {
       name: document.getElementById('mm-name').value,
+      specialization: document.getElementById('mm-spec').value,
       serviceIds: Array.prototype.map.call(servicesBox.querySelectorAll('[data-service]:checked'), function(c){ return Number(c.getAttribute('data-service')); }),
       doesDesign: document.getElementById('mm-design').checked,
       schedule: schedule

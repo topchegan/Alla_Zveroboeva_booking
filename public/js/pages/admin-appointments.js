@@ -3,7 +3,11 @@
   var esc = UI.esc;
   var list = document.getElementById('aa-list');
   var empty = document.getElementById('aa-empty');
-  var f = { date: document.getElementById('af-date'), master: document.getElementById('af-master'), status: document.getElementById('af-status') };
+  var loadError = document.getElementById('aa-load-error');
+  var f = {
+    date: document.getElementById('af-date'), master: document.getElementById('af-master'),
+    status: document.getElementById('af-status'), order: document.getElementById('af-order')
+  };
   var items = [], current = null, picker = null, moveSel = { date: null, time: null };
   var moveBtn = document.getElementById('am-confirm');
 
@@ -22,6 +26,7 @@
     return '<div class="admin-row">' +
       '<div class="admin-row__main">' +
         '<div class="admin-row__title">' + esc(a.clientName) + '</div>' +
+        '<div class="admin-row__meta">' + esc(a.clientEmail) + '</div>' +
         '<div class="admin-row__meta">' + esc(what(a)) + '</div>' +
         '<div class="admin-row__meta">' + esc(when(a)) + ' · ' + UI.fmtPrice(a.price) + '</div>' +
         (a.status === 'cancelled' ? '<div class="admin-row__meta">' + (a.cancelledBy === 'admin' ? 'Отменена администратором' : 'Отменена клиентом') + '</div>' : '') +
@@ -33,15 +38,19 @@
     '</div>';
   }
   function load(){
-    return API.getAllAppointments({ date: f.date.value, masterId: f.master.value, status: f.status.value }).then(function(data){
+    UI.hideError(loadError);
+    return API.getAllAppointments({ date: f.date.value, masterId: f.master.value, status: f.status.value, order: f.order.value }).then(function(data){
       items = data;
       list.innerHTML = data.map(row).join('');
       empty.hidden = data.length > 0;
+    }, function(err){
+      list.innerHTML = '';
+      UI.showError(loadError, err.message || 'Не удалось загрузить записи');
     });
   }
   function find(id){ return items.filter(function(a){ return a.id === id; })[0]; }
 
-  [f.date, f.master, f.status].forEach(function(x){ x.addEventListener('change', load); });
+  [f.date, f.master, f.status, f.order].forEach(function(x){ x.addEventListener('change', load); });
 
   /* ---------- Отмена ---------- */
   var cancelError = document.getElementById('aa-cancel-error');
@@ -65,6 +74,7 @@
     }, function(err){
       btn.disabled = false;
       UI.showError(cancelError, err.message || 'Не удалось отменить запись');
+      load();
     });
   });
 
@@ -78,8 +88,8 @@
     UI.hideError(moveError);
     if (!picker) {
       picker = UI.createTimePicker(document.getElementById('am-picker'), {
-        loadDates: function(){ return API.getRescheduleDates(current.id); },
-        loadSlots: function(date){ return API.getRescheduleSlots(current.id, date); },
+        loadDates: function(){ return API.adminGetRescheduleDates(current.id); },
+        loadSlots: function(date){ return API.adminGetRescheduleSlots(current.id, date); },
         onChange: function(s){ moveSel = s; moveBtn.classList.toggle('btn--disabled', !(s.date && s.time)); }
       });
     }
@@ -102,11 +112,14 @@
       moveBtn.disabled = false;
       UI.showError(moveError, err.message || 'Не удалось перенести запись');
       if (err.code === 'SLOT_TAKEN') picker.refreshSlots();
+      else load();
     });
   });
 
   API.adminGetMasters().then(function(masters){
-    f.master.innerHTML += masters.map(function(m){ return '<option value="' + m.id + '">' + esc(m.name) + '</option>'; }).join('');
-    load();
-  });
+    f.master.innerHTML += masters.map(function(m){
+      return '<option value="' + m.id + '">' + esc(m.name) + (m.active ? '' : ' (отключён)') + '</option>';
+    }).join('');
+    if (UI.query('masterId')) f.master.value = UI.query('masterId'); // переход из предупреждения о блокировке
+  }, function(){ /* без списка мастеров фильтр просто пустой */ }).then(load);
 })();

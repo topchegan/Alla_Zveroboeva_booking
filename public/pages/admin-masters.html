@@ -21,6 +21,10 @@
     </div>
     <button class="btn btn--primary" type="button" id="master-add">Добавить мастера</button>
   </div>
+  <div class="alert alert--warn page-alert" id="mst-warning" role="status">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    <span data-error-text></span>
+  </div>
   <div class="admin-list" id="masters-list"><div class="spinner"></div></div>
   <p class="booking-card__note" style="margin-top:var(--sp-5)">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
@@ -37,12 +41,17 @@
         <span class="field__label">Имя</span>
         <input class="field__input" type="text" id="mm-name" placeholder="Имя и фамилия">
       </label>
+      <label class="field">
+        <span class="field__label">Специализация</span>
+        <input class="field__input" type="text" id="mm-spec" placeholder="Например: Мастер маникюра и педикюра">
+      </label>
       <div class="field">
         <span class="field__label">Услуги мастера</span>
         <div style="display:flex; flex-direction:column; gap:8px; margin-top:2px" id="mm-services"></div>
       </div>
       <div class="field">
         <span class="field__label">График по дням недели</span>
+        <p class="small muted" style="margin:2px 0 6px">Салон работает вт–сб, 10:00–20:00 — смена должна укладываться в эти часы.</p>
         <div class="sched" id="mm-sched"></div>
       </div>
     </div>
@@ -57,7 +66,6 @@
   </form>
 </div>
 
-<script src="/js/mock-data.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/ui.js"></script>
 <script src="/js/pages/admin-masters.js"></script>

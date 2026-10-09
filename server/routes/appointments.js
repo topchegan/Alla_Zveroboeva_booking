@@ -6,21 +6,13 @@ const express = require('express');
 const { transaction } = require('../db');
 const { ApiError, requireUser } = require('../http');
 const { toMin, stamp } = require('../time');
-const { isTime, parseId, resolveVisit, checkDate, calcSlots, availableDates } = require('../slots');
-const { findClientAppointment, clientAppointmentView, clientCanChange } = require('../appointments');
+const { parseId, resolveVisit, checkDate, calcSlots, availableDates } = require('../slots');
+const {
+  slotTaken, isUniqueError, checkDateTime, findClientAppointment, clientAppointmentView, clientCanChange,
+  moveAppointment, cancelAppointment,
+} = require('../appointments');
 
-const slotTaken = () => new ApiError(409, 'SLOT_TAKEN', 'Это время уже заняли, выберите другое.');
 const notFound = () => new ApiError(404, 'NOT_FOUND', 'Запись не найдена');
-
-// Нарушение уникального индекса «у мастера одно действующее начало» → SLOT_TAKEN
-function isUniqueError(err) {
-  return /UNIQUE constraint failed/i.test(String(err && err.message));
-}
-
-function checkDateTime(body) {
-  checkDate(body.date);
-  if (!isTime(body.time)) throw new ApiError(400, 'VALIDATION', 'Укажите время в формате ЧЧ:ММ');
-}
 
 function appointmentsRouter(db) {
   const router = express.Router();
@@ -76,8 +68,7 @@ function appointmentsRouter(db) {
   router.post('/:id/cancel', (req, res) => {
     const row = own(req);
     checkChangeable(row, 'Отменить');
-    db.prepare("UPDATE appointments SET status = 'cancelled', cancelled_by = 'client', updated_at = ? WHERE id = ? AND status = 'active'")
-      .run(new Date().toISOString(), row.id);
+    cancelAppointment(db, row.id, 'client');
     res.json(clientAppointmentView(db, row.id, req.user.id));
   });
 
@@ -97,19 +88,11 @@ function appointmentsRouter(db) {
     checkChangeable(own(req), 'Перенести');
     const body = req.body || {};
     checkDateTime(body);
-    transaction(db, () => {
-      const row = own(req);
-      checkChangeable(row, 'Перенести');
-      const free = calcSlots(db, { masterId: row.master_id, date: body.date, duration: row.duration_min, excludeId: row.id });
-      if (!free.includes(body.time)) throw slotTaken();
-      const start = toMin(body.time);
-      try {
-        db.prepare('UPDATE appointments SET start_at = ?, end_at = ?, updated_at = ? WHERE id = ?')
-          .run(stamp(body.date, start), stamp(body.date, start + row.duration_min), new Date().toISOString(), row.id);
-      } catch (err) {
-        if (isUniqueError(err)) throw slotTaken();
-        throw err;
-      }
+    moveAppointment(db, {
+      load: () => own(req),
+      check: (row) => checkChangeable(row, 'Перенести'),
+      date: body.date,
+      time: body.time,
     });
     res.json(clientAppointmentView(db, parseId(req.params.id), req.user.id));
   });

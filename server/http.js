@@ -24,6 +24,13 @@ function requireUser(req, res, next) {
   next();
 }
 
+// Только администратор: гость → 401, клиент → 403 (стоит перед всеми маршрутами /api/admin/*)
+function requireAdmin(req, res, next) {
+  if (!req.user) return sendError(res, 401, 'UNAUTHORIZED', 'Войдите в аккаунт');
+  if (req.user.role !== 'admin') return sendError(res, 403, 'FORBIDDEN', 'Доступно только администратору');
+  next();
+}
+
 function apiNotFound(req, res) {
   sendError(res, 404, 'NOT_FOUND', 'Не найдено');
 }
@@ -38,4 +45,4 @@ function apiErrorHandler(err, req, res, next) {
   sendError(res, 500, 'INTERNAL', 'Ошибка сервера. Попробуйте ещё раз');
 }
 
-module.exports = { ApiError, sendError, requireJson, requireUser, apiNotFound, apiErrorHandler };
+module.exports = { ApiError, sendError, requireJson, requireUser, requireAdmin, apiNotFound, apiErrorHandler };
