@@ -7,7 +7,7 @@ SQLite через встроенный `node:sqlite` (Node.js 22). Файл ба
 в `schema_migrations`. Затем `server/seed.js` заполняет пустые таблицы начальными данными.
 Для каждого соединения включено `PRAGMA foreign_keys = ON`.
 
-Актуальная схема: миграции `001_init.sql` и `002_login_attempts.sql`.
+Актуальная схема: миграции `001_init.sql`, `002_login_attempts.sql` и `003_notifications.sql`.
 
 ## Соглашения
 
@@ -24,6 +24,8 @@ SQLite через встроенный `node:sqlite` (Node.js 22). Файл ба
 erDiagram
   users ||--o{ sessions : "входы"
   users ||--o{ appointments : "client_id"
+  users ||--o{ notifications : "client_id"
+  appointments ||--o{ notifications : "appointment_id"
   masters ||--o{ appointments : "master_id"
   services ||--o{ appointments : "service_id"
   masters ||--o{ master_services : ""
@@ -158,6 +160,7 @@ CHECK: либо `all_day = 1` и время пустое, либо `all_day = 0`
 | price | INTEGER | NOT NULL, ≥ 0; итог на момент записи |
 | status | TEXT | NOT NULL, DEFAULT `'active'`, CHECK `active`/`cancelled` |
 | cancelled_by | TEXT | CHECK `client`/`admin`; NULL у действующей записи |
+| rescheduled_by | TEXT | CHECK `client`/`admin`; кто сделал последний перенос, NULL — переносов не было (003) |
 | created_at | TEXT | NOT NULL |
 | updated_at | TEXT | NOT NULL |
 
@@ -173,13 +176,50 @@ CHECK: `status = 'active'` ⇔ `cancelled_by IS NULL`.
 - `ix_appointments_client_start (client_id, start_at)` — личный кабинет.
 - `ix_appointments_master_start (master_id, start_at)` — расчёт слотов и админка.
 
+`rescheduled_by = 'admin'` → в карточке клиента пометка «Время изменено администратором».
+Перенос самим клиентом записывает `'client'` и снимает пометку.
+
+### notifications — уведомления клиенту в личном кабинете (003_notifications.sql)
+
+Уведомление создаётся только когда запись клиента изменил администратор: при переносе
+(`moveAppointment(…, by: 'admin')`) и при отмене (`cancelAppointment(…, 'admin')`), в той же
+транзакции, что и изменение записи (`server/notifications.js`). Свои перенос и отмена клиента
+уведомлений не создают. Email и SMS не отправляются.
+
+| Поле | Тип | Ограничения |
+|---|---|---|
+| id | INTEGER | PK |
+| client_id | INTEGER | NOT NULL → `users.id`, ON DELETE CASCADE; кому |
+| appointment_id | INTEGER | NOT NULL → `appointments.id`, ON DELETE CASCADE |
+| kind | TEXT | NOT NULL, CHECK `rescheduled`/`cancelled` |
+| text | TEXT | NOT NULL; готовый текст на момент события, дальше не меняется |
+| old_start_at | TEXT | NOT NULL, `YYYY-MM-DD HH:MM`, Москва; время до изменения |
+| old_end_at | TEXT | NOT NULL |
+| new_start_at | TEXT | новое время при переносе; NULL при отмене |
+| new_end_at | TEXT | то же |
+| created_at | TEXT | NOT NULL, UTC |
+| read_at | TEXT | UTC; NULL — не прочитано |
+
+CHECK: у `rescheduled` заполнено новое время, у `cancelled` оно пустое.
+Индексы: `ix_notifications_client (client_id, created_at)` — список в кабинете;
+`ix_notifications_client_unread (client_id) WHERE read_at IS NULL` — счётчик в шапке.
+
+Пример текста: «Администратор перенёс вашу запись «Ламинирование бровей» к Елене Смирновой:
+было чт 15 окт 15:00–16:00, стало чт 15 окт 15:30–16:30».
+
+API (`server/routes/me.js`, все запросы с `client_id = текущий пользователь`):
+`GET /api/me/notifications`, `GET /api/me/notifications/unread-count`,
+`POST /api/me/notifications/read` `{ ids }` (чужие id не затрагиваются),
+`POST /api/me/notifications/:id/read` (чужое или несуществующее → `404 NOT_FOUND`).
+
 ## Изменения из админ-панели
 
 Схема для админ-панели не менялась (миграций на этапе 3 нет). Админ-панель (`server/routes/admin.js`):
 - правит `services`, `design_option`, `masters`, `master_services`, `master_schedule` (услуги и график мастера
   перезаписываются в одной транзакции), добавляет и удаляет строки `blocks`;
 - отменяет записи (`status = 'cancelled'`, `cancelled_by = 'admin'`) и переносит их (`start_at`, `end_at`
-  той же строки) в транзакции `BEGIN IMMEDIATE` с проверкой `calcSlots`;
+  той же строки, `rescheduled_by = 'admin'`) в транзакции `BEGIN IMMEDIATE` с проверкой `calcSlots`;
+  с шага 14 в той же транзакции клиенту добавляется строка `notifications`;
 - не меняет `appointments.price` и `duration_min` при правке услуги — записи хранят свои значения.
 
 Ограничения графика, которых нет в CHECK (проверяются в API): рабочие дни мастера — только вт–сб
@@ -189,6 +229,7 @@ CHECK: `status = 'active'` ⇔ `cancelled_by IS NULL`.
 
 - Мастера, услуги и пользователей с записями удалить нельзя (`ON DELETE RESTRICT`). Отключение — `is_active = 0`.
 - Записи не удаляются: отмена — `status = 'cancelled'` и `cancelled_by`.
+- Уведомления не удаляются; прочтение заполняет `read_at`.
 
 ## Начальные данные (server/seed.js)
 
@@ -211,3 +252,6 @@ CHECK: `status = 'active'` ⇔ `cancelled_by IS NULL`.
 `npm run db:check` — запускает сервер дважды на временной базе и проверяет миграции, seed,
 уникальный индекс, вставку отменённой записи, запрет удаления мастера с записями и то, что
 демо-записи не выходят за график и не попадают на блокировки.
+
+`npm run notifications:check` — уведомления на временной базе: перенос и отмена администратором,
+действия самого клиента, доступ к чужим уведомлениям, прочтение.

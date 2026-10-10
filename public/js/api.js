@@ -121,7 +121,12 @@ window.API = (function(){
     rescheduleAppointment: function(id, data){
       data = data || {};
       return request('POST', '/api/appointments/' + encodeURIComponent(id) + '/reschedule', { date: data.date, time: data.time });
-    }
+    },
+    /* Уведомления клиента (перенос и отмена записи администратором): только свои */
+    getNotifications: function(){ return request('GET', '/api/me/notifications'); },
+    getUnreadCount: function(){ return request('GET', '/api/me/notifications/unread-count'); },
+    /* Отметить прочитанными; ответ — { count } оставшихся непрочитанных */
+    markNotificationsRead: function(ids){ return request('POST', '/api/me/notifications/read', { ids: ids }); }
   };
 
   function id(x){ return encodeURIComponent(x); }

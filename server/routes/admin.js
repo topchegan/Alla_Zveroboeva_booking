@@ -225,6 +225,7 @@ function adminRouter(db) {
       check: (row) => checkAdminChangeable(row, 'Перенести'),
       date: body.date,
       time: body.time,
+      by: 'admin',
     });
     res.json(adminAppointmentView(db, parseId(req.params.id)));
   });

@@ -93,6 +93,7 @@ function appointmentsRouter(db) {
       check: (row) => checkChangeable(row, 'Перенести'),
       date: body.date,
       time: body.time,
+      by: 'client',
     });
     res.json(clientAppointmentView(db, parseId(req.params.id), req.user.id));
   });

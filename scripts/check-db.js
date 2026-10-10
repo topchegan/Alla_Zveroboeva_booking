@@ -10,11 +10,11 @@ const { openDatabase } = require('../server/db');
 
 const ROOT = path.join(__dirname, '..');
 const TABLES = ['schema_migrations', 'users', 'sessions', 'login_attempts', 'services', 'design_option', 'masters',
-  'master_services', 'master_schedule', 'blocks', 'appointments'];
+  'master_services', 'master_schedule', 'blocks', 'appointments', 'notifications'];
 const MIGRATIONS = fs.readdirSync(path.join(__dirname, '..', 'migrations')).filter((f) => /^\d+_.+\.sql$/.test(f));
 const EXPECTED_AFTER_SEED = {
   schema_migrations: MIGRATIONS.length, users: 4, sessions: 0, login_attempts: 0, services: 5, design_option: 1, masters: 3,
-  master_services: 9, master_schedule: 11, blocks: 3, appointments: 6,
+  master_services: 9, master_schedule: 11, blocks: 3, appointments: 6, notifications: 0,
 };
 
 const results = [];
