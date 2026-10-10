@@ -5,6 +5,7 @@ const { ApiError } = require('./http');
 const { DAY_MS, fromMin, toMin, mskToEpoch, stamp } = require('./time');
 const { CHANGE_LIMIT_HOURS } = require('./salon');
 const { isTime, checkDate, calcSlots, designMinutes, designPrice, designOptionRow } = require('./slots');
+const { notifyRescheduled, notifyCancelled } = require('./notifications');
 
 const CHANGE_LIMIT_MS = CHANGE_LIMIT_HOURS * DAY_MS / 24; // клиент может отменить или перенести не позже чем за 24 ч
 
@@ -63,6 +64,7 @@ function appointmentView(row, option, forClient) {
     price: row.price,
     status: row.status,
     cancelledBy: row.cancelled_by,
+    rescheduledBy: row.rescheduled_by,
     isPast: start + row.duration_min * 60000 <= now,
     isStarted: startsIn <= 0,
     canChange: row.status === 'active' && (forClient ? startsIn >= CHANGE_LIMIT_MS : startsIn > 0),
@@ -111,29 +113,40 @@ function listAllAppointments(db, { date, masterId, status }, order) {
 }
 
 // Перенос записи на { date, time } — в транзакции BEGIN IMMEDIATE.
-// load() заново читает запись внутри транзакции, check(row) — правила роли (24 ч для клиента и т.п.).
+// load() заново читает запись (SELECT_VIEW) внутри транзакции, check(row) — правила роли (24 ч для клиента и т.п.).
 // Новое время проверяется той же calcSlots без учёта самой записи; меняется время той же записи.
-function moveAppointment(db, { load, check, date, time }) {
+// by — кто переносит ('client' | 'admin'): записывается в rescheduled_by; при переносе администратором
+// в той же транзакции клиенту создаётся уведомление «было → стало».
+function moveAppointment(db, { load, check, date, time, by }) {
   transaction(db, () => {
     const row = load();
     check(row);
     const free = calcSlots(db, { masterId: row.master_id, date, duration: row.duration_min, excludeId: row.id });
     if (!free.includes(time)) throw slotTaken();
     const start = toMin(time);
+    const newStart = stamp(date, start);
+    const newEnd = stamp(date, start + row.duration_min);
+    const changed = newStart !== row.start_at; // перенос «на то же время» ничего не меняет и не уведомляет
     try {
-      db.prepare('UPDATE appointments SET start_at = ?, end_at = ?, updated_at = ? WHERE id = ?')
-        .run(stamp(date, start), stamp(date, start + row.duration_min), new Date().toISOString(), row.id);
+      db.prepare('UPDATE appointments SET start_at = ?, end_at = ?, rescheduled_by = ?, updated_at = ? WHERE id = ?')
+        .run(newStart, newEnd, changed ? by : row.rescheduled_by, new Date().toISOString(), row.id);
     } catch (err) {
       if (isUniqueError(err)) throw slotTaken();
       throw err;
     }
+    if (by === 'admin' && changed) notifyRescheduled(db, row, newStart, newEnd);
   });
 }
 
-// Отмена: запись не удаляется, меняется статус; время сразу снова свободно
+// Отмена: запись не удаляется, меняется статус; время сразу снова свободно.
+// При отмене администратором в той же транзакции клиенту создаётся уведомление.
 function cancelAppointment(db, id, by) {
-  db.prepare("UPDATE appointments SET status = 'cancelled', cancelled_by = ?, updated_at = ? WHERE id = ? AND status = 'active'")
-    .run(by, new Date().toISOString(), id);
+  transaction(db, () => {
+    const row = findAppointment(db, id);
+    const changed = db.prepare("UPDATE appointments SET status = 'cancelled', cancelled_by = ?, updated_at = ? WHERE id = ? AND status = 'active'")
+      .run(by, new Date().toISOString(), id).changes;
+    if (by === 'admin' && Number(changed) > 0) notifyCancelled(db, row);
+  });
 }
 
 module.exports = {

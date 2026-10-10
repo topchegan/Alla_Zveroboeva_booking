@@ -9,7 +9,8 @@
     "db:check": "node scripts/check-db.js",
     "auth:check": "node scripts/check-auth.js",
     "booking:check": "node scripts/check-booking.js",
-    "admin:check": "node scripts/check-admin.js"
+    "admin:check": "node scripts/check-admin.js",
+    "notifications:check": "node scripts/check-notifications.js"
   },
   "engines": {
     "node": ">=22.9"

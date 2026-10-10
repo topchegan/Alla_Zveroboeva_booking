@@ -91,14 +91,37 @@ window.UI = (function(){
     }
     var links = user.role === 'admin'
       ? '<a class="site-header__link site-header__link--admin site-header__link--hide-m" href="/admin">Админ-панель</a>'
-      : '<a class="site-header__link site-header__link--hide-m" href="/cabinet">Мои записи</a>';
+      : '<a class="site-header__link site-header__link--hide-m" href="/cabinet" data-my-link>Мои записи' +
+          '<span class="notif-count" data-notif-count hidden></span></a>';
     host.outerHTML =
       '<header class="booking-head"><div class="booking-head__in">' + LOGO +
         '<div class="site-header__nav">' + links +
           '<a class="site-header__link" href="/" data-logout>Выйти</a>' +
-          '<span class="user-chip"><span class="avatar">' + esc(initials(user.name)) + '</span>' + esc(firstName(user.name)) + '</span>' +
+          '<span class="user-chip"><span class="avatar">' + esc(initials(user.name)) + '</span>' +
+            '<span class="user-chip__name">' + esc(firstName(user.name)) + '</span></span>' +
         '</div>' +
       '</div></header>';
+    if (user.role !== 'client') return;
+    // В кабинете число передаёт сама страница (до того, как отметит уведомления прочитанными)
+    if (notifCount !== null) setNotifCount(notifCount);
+    else if (document.body.getAttribute('data-notifs') !== 'page') {
+      API.getUnreadCount().then(function(r){ setNotifCount(r.count); }, function(){});
+    }
+  }
+
+  /* Счётчик непрочитанных уведомлений у «Мои записи» (только клиент).
+     С непрочитанными ссылка видна и на телефоне. Шапка рисуется асинхронно — число запоминается */
+  var notifCount = null;
+  function setNotifCount(n){
+    notifCount = n || 0;
+    var link = document.querySelector('[data-my-link]');
+    var el = document.querySelector('[data-notif-count]');
+    if (!link || !el) return;
+    el.hidden = !notifCount;
+    el.textContent = notifCount > 99 ? '99+' : String(notifCount || '');
+    el.setAttribute('aria-label', notifCount ? 'непрочитанных уведомлений: ' + notifCount : '');
+    link.setAttribute('title', notifCount ? 'Новых уведомлений: ' + notifCount : '');
+    link.classList.toggle('site-header__link--hide-m', !notifCount);
   }
 
   /* Вкладки админ-панели */
@@ -317,6 +340,7 @@ window.UI = (function(){
 
   return {
     ICONS: ICONS,
+    setNotifCount: setNotifCount,
     WD_SHORT: WD_SHORT,
     WD_FULL: WD_FULL,
     esc: esc,
@@ -325,6 +349,7 @@ window.UI = (function(){
     fmtDateLong: fmtDateLong,
     fmtDateShort: fmtDateShort,
     fmtDateHuman: fmtDateHuman,
+    pad: pad,
     firstName: firstName,
     initials: initials,
     query: query,

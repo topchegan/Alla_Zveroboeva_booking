@@ -832,3 +832,60 @@ a.step:hover .step__dot{ box-shadow:0 0 0 4px var(--pink-tint); }
 .page-alert{ display:none; margin-bottom:var(--sp-5); }
 .page-alert.is-visible{ display:flex; }
 .alert--warn a{ color:inherit; text-decoration:underline; }
+
+/* ============================================================
+   ШАГ 14: уведомления клиента (только в кабинете, без email/SMS)
+   ============================================================ */
+/* Счётчик непрочитанных у «Мои записи» в шапке */
+.notif-count{
+  min-width:20px; height:20px; padding:0 6px; margin-left:6px; border-radius:var(--r-pill);
+  display:inline-grid; place-items:center; vertical-align:1px;
+  background:var(--pink-deep); color:#fff;
+  font-size:11px; font-weight:800; line-height:1;
+}
+.notif-count[hidden]{ display:none; }
+
+/* Блок уведомлений в кабинете */
+.notifs{
+  margin-bottom:var(--sp-5); padding:var(--sp-4) var(--sp-5);
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--r-l);
+}
+.notifs[hidden]{ display:none; }
+.notifs__title{ font-family:var(--font-display); font-size:1.2rem; font-weight:600; margin:0 0 var(--sp-3); }
+.notifs__list{ display:flex; flex-direction:column; gap:var(--sp-2); }
+.notifs__more{ margin-top:var(--sp-2); }
+.notif{
+  display:flex; gap:var(--sp-3); align-items:flex-start;
+  padding:var(--sp-3); border-radius:var(--r-m);
+  background:var(--milk); color:var(--ink-2);
+}
+.notif--new{ background:var(--pink-tint); color:var(--ink); }
+.notif__icon{
+  width:32px; height:32px; flex:none; border-radius:50%;
+  display:grid; place-items:center; background:var(--surface);
+}
+.notif__icon svg{ width:16px; height:16px; stroke:var(--pink-deep); fill:none; stroke-width:1.8; }
+.notif__body{ min-width:0; }
+.notif__text{ margin:0; font-size:var(--fs-small); line-height:1.5; overflow-wrap:anywhere; }
+.notif--new .notif__text{ font-weight:600; }
+.notif__meta{ margin:4px 0 0; font-size:12px; color:var(--ink-3); display:flex; gap:var(--sp-2); align-items:center; flex-wrap:wrap; }
+.notif__new{
+  padding:2px 8px; border-radius:var(--r-pill);
+  background:var(--pink-deep); color:#fff;
+  font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+}
+
+/* Пометка в карточке записи, время которой изменил администратор */
+.booking-card__note--admin{ color:#8F6A24; font-weight:700; }
+.booking-card__note--admin svg{ stroke:#8F6A24; }
+
+@media (max-width:520px){
+  .notifs{ padding:var(--sp-4); }
+  /* Ссылка «Мои записи» со счётчиком видна на телефоне — у плашки пользователя остаются только инициалы */
+  .booking-head__in:has([data-my-link]:not(.site-header__link--hide-m)){ padding-left:var(--sp-4); padding-right:var(--sp-4); gap:var(--sp-2); }
+  .booking-head__in:has([data-my-link]:not(.site-header__link--hide-m)) .logo{ min-width:0; }
+  .booking-head__in:has([data-my-link]:not(.site-header__link--hide-m)) .site-header__nav{ gap:0; }
+  .booking-head__in:has([data-my-link]:not(.site-header__link--hide-m)) .site-header__link{ padding:8px 6px; }
+  .booking-head__in:has([data-my-link]:not(.site-header__link--hide-m)) .user-chip{ padding:4px; }
+  .booking-head__in:has([data-my-link]:not(.site-header__link--hide-m)) .user-chip__name{ display:none; }
+}

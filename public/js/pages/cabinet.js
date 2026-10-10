@@ -1,4 +1,4 @@
-/* Личный кабинет: записи клиента, отмена (≥ 24 ч до визита), ссылка на перенос */
+/* Личный кабинет: уведомления от администратора, записи клиента, отмена (≥ 24 ч до визита), ссылка на перенос */
 (function(){
   var esc = UI.esc, I = UI.ICONS;
   var list = document.getElementById('cab-list');
@@ -14,6 +14,9 @@
   function note(text){
     return '<p class="booking-card__note">' + I.info + esc(text) + '</p>';
   }
+  function adminNote(text){
+    return '<p class="booking-card__note booking-card__note--admin">' + I.info + esc(text) + '</p>';
+  }
   function card(a){
     var active = a.status === 'active' && !a.isPast;
     var actions = '', notes = '';
@@ -27,6 +30,7 @@
         '<button class="btn btn--text" type="button" disabled style="background:none">Отменить</button>';
       notes = note('Отмена и перенос возможны не позже чем за 24 часа. Свяжитесь с администратором: ' + phone);
     }
+    if (a.status === 'active' && a.rescheduledBy === 'admin') notes = adminNote('Время изменено администратором') + notes;
     if (a.status === 'cancelled') notes = note(a.cancelledBy === 'admin' ? 'Отменена администратором' : 'Вы отменили эту запись');
     return '<div class="booking-card">' +
       '<div class="booking-card__top"><div>' +
@@ -58,6 +62,47 @@
   function load(){
     return API.getMyAppointments().then(function(data){ items = data; render(); });
   }
+
+  /* Уведомления: непрочитанные выделены «Новое» и после показа отмечаются прочитанными.
+     Счётчик в шапке показывает, сколько было новых при открытии кабинета; на следующей странице — 0 */
+  var NOTIFS_SHOWN = 3;
+  var notifsBox = document.getElementById('cab-notifs');
+  var notifsList = document.getElementById('cab-notifs-list');
+  var notifsMore = document.getElementById('cab-notifs-more');
+  var notifs = [], notifsAll = false;
+
+  function fmtCreated(iso){
+    var d = new Date(iso);
+    var msk = new Date(d.getTime() + 180 * 60000); // время по Москве
+    var date = msk.getUTCFullYear() + '-' + UI.pad(msk.getUTCMonth() + 1) + '-' + UI.pad(msk.getUTCDate());
+    return UI.fmtDateHuman(date) + ', ' + UI.pad(msk.getUTCHours()) + ':' + UI.pad(msk.getUTCMinutes());
+  }
+  function notifItem(n){
+    return '<div class="notif' + (n.isRead ? '' : ' notif--new') + '">' +
+      '<span class="notif__icon">' + (n.kind === 'cancelled' ? I.info : I.calendar) + '</span>' +
+      '<div class="notif__body">' +
+        '<p class="notif__text">' + esc(n.text) + '</p>' +
+        '<p class="notif__meta">' + (n.isRead ? '' : '<span class="notif__new">Новое</span>') + esc(fmtCreated(n.createdAt)) + '</p>' +
+      '</div>' +
+    '</div>';
+  }
+  function renderNotifs(){
+    notifsBox.hidden = !notifs.length;
+    var shown = notifsAll ? notifs : notifs.slice(0, Math.max(NOTIFS_SHOWN, notifs.filter(function(n){ return !n.isRead; }).length));
+    notifsList.innerHTML = shown.map(notifItem).join('');
+    notifsMore.hidden = shown.length >= notifs.length;
+    notifsMore.textContent = 'Показать все (' + notifs.length + ')';
+  }
+  function loadNotifs(){
+    return API.getNotifications().then(function(data){
+      notifs = data;
+      var unread = notifs.filter(function(n){ return !n.isRead; }).map(function(n){ return n.id; });
+      UI.setNotifCount(unread.length);
+      renderNotifs();
+      if (unread.length) API.markNotificationsRead(unread).catch(function(){});
+    }, function(){ UI.setNotifCount(0); });
+  }
+  notifsMore.addEventListener('click', function(){ notifsAll = true; renderNotifs(); });
 
   tabs.addEventListener('click', function(e){
     var b = e.target.closest('[data-tab]');
@@ -97,5 +142,6 @@
     if (r[0]) document.getElementById('cab-sub').textContent = UI.firstName(r[0].name) + ', здесь все ваши визиты — предстоящие и прошедшие.';
     phone = r[1].phone;
     load();
+    if (r[0] && r[0].role === 'client') loadNotifs();
   });
 })();
